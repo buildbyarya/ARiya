@@ -6,7 +6,9 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex items-center justify-center">
       <button
-        onClick={() => signIn("google")}
+        onClick={() => signIn("google", {
+  callbackUrl: "/park"
+})}
         className="px-6 py-3 rounded-lg bg-black text-white"
       >
         Continue with Google

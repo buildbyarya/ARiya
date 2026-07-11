@@ -1,36 +1,46 @@
-export default function Home() {
-  return (
-    <main className="min-h-screen flex items-center justify-center bg-black text-white">
-      <div className="text-center space-y-6">
-        <h1 className="text-5xl font-bold">
-          ARiya 💙
-        </h1>
+import { getServerSession } from "next-auth"
+import { redirect } from "next/navigation"
 
-        <p className="text-gray-400 text-lg">
-          Arya + Riya Space
-        </p>
+import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
 
-        <div className="grid gap-4 w-72 mx-auto">
 
-          <button className="bg-white text-black rounded-xl py-3 font-semibold">
-            🎬 Watch Together
-          </button>
+export default async function EntryPage() {
 
-          <button className="bg-white text-black rounded-xl py-3 font-semibold">
-            🎵 Listen Together
-          </button>
+  const session = await getServerSession(authOptions)
 
-          <button className="bg-white text-black rounded-xl py-3 font-semibold">
-            💬 Chat
-          </button>
 
-          <button className="bg-white text-black rounded-xl py-3 font-semibold">
-            🔔 Actions
-          </button>
+  // Not logged in
+  if (!session?.user?.email) {
+    redirect("/login")
+  }
 
-        </div>
 
-      </div>
-    </main>
-  );
+  const user = await prisma.user.findUnique({
+    where: {
+      email: session.user.email,
+    },
+  })
+
+
+  if (!user) {
+    redirect("/login")
+  }
+
+
+  const membership = await prisma.homeMember.findUnique({
+    where: {
+      userId: user.id,
+    },
+  })
+
+
+  // Already belongs to a home
+  if (membership) {
+    redirect("/home")
+  }
+
+
+  // No home yet
+  redirect("/park")
 }

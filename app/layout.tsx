@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ARiya"
+  title: "ARiya",
   description: "A shared home for couples",
 };
 

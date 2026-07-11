@@ -24,6 +24,10 @@ model User {
   sessions Session[]
 
   homeMembership HomeMember?
+
+  pendingHomes PendingHome[] @relation("CreatedPendingHomes")
+
+  joinedPendingHomes PendingHome[] @relation("JoinedPendingHomes")
 }
 
 model Home {
@@ -36,6 +40,26 @@ model Home {
   createdAt DateTime @default(now())
 
   members HomeMember[]
+}
+
+model PendingHome {
+  id String @id @default(cuid())
+
+  inviteCode String @unique
+
+  creatorId String
+
+  partnerId String?
+
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  creator User @relation("CreatedPendingHomes", fields: [creatorId], references: [id], onDelete: Cascade)
+
+  partner User? @relation("JoinedPendingHomes", fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([inviteCode])
 }
 
 model HomeMember {
