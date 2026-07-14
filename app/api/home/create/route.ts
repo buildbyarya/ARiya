@@ -19,10 +19,11 @@ function generateInviteCode() {
 
 
 
-export async function POST() {
+export async function POST(request: Request) {
 
 
   const session = await getServerSession(authOptions)
+
 
 
   if(!session?.user?.email){
@@ -37,6 +38,29 @@ export async function POST() {
     )
 
   }
+
+
+
+  const body = await request.json()
+
+  const nickname =
+    body.nickname?.trim()
+
+
+
+  if(!nickname){
+
+    return NextResponse.json(
+      {
+        error:"Nickname required"
+      },
+      {
+        status:400
+      }
+    )
+
+  }
+
 
 
 
@@ -62,6 +86,24 @@ export async function POST() {
     )
 
   }
+
+
+
+  // Save nickname
+
+  await prisma.user.update({
+
+    where:{
+      id:user.id
+    },
+
+    data:{
+      nickname
+    }
+
+  })
+
+
 
 
 
@@ -91,6 +133,7 @@ export async function POST() {
 
 
 
+
   const existingPending =
     await prisma.pendingHome.findFirst({
 
@@ -106,7 +149,8 @@ export async function POST() {
 
     return NextResponse.json({
 
-      inviteCode: existingPending.inviteCode
+      inviteCode:
+        existingPending.inviteCode
 
     })
 
@@ -114,8 +158,12 @@ export async function POST() {
 
 
 
+
+
   const inviteCode =
     generateInviteCode()
+
+
 
 
 
@@ -136,6 +184,8 @@ export async function POST() {
       }
 
     })
+
+
 
 
 

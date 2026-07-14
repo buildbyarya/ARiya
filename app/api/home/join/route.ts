@@ -4,10 +4,13 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
 
+
 export async function POST(request: Request) {
 
 
-  const session = await getServerSession(authOptions)
+  const session =
+    await getServerSession(authOptions)
+
 
 
   if (!session?.user?.email) {
@@ -25,62 +28,21 @@ export async function POST(request: Request) {
 
 
 
-  const user = await prisma.user.findUnique({
 
-    where: {
-      email: session.user.email,
-    },
-
-  })
+  const body =
+    await request.json()
 
 
 
-  if (!user) {
-
-    return NextResponse.json(
-      {
-        error: "User not found",
-      },
-      {
-        status: 404,
-      }
-    )
-
-  }
+  const code =
+    body.code?.trim()
 
 
 
-  // Check if user already has a home
-
-  const existingHome =
-    await prisma.homeMember.findUnique({
-
-      where: {
-        userId: user.id,
-      },
-
-    })
+  const nickname =
+    body.nickname?.trim()
 
 
-
-  if (existingHome) {
-
-    return NextResponse.json(
-      {
-        error: "You already belong to a home",
-      },
-      {
-        status: 400,
-      }
-    )
-
-  }
-
-
-
-  const body = await request.json()
-
-  const code = body.code?.trim()
 
 
 
@@ -99,27 +61,103 @@ export async function POST(request: Request) {
 
 
 
-  // Find waiting home
+  if (!nickname) {
+
+    return NextResponse.json(
+      {
+        error: "Nickname required",
+      },
+      {
+        status: 400,
+      }
+    )
+
+  }
+
+
+
+
+
+
+  const user =
+    await prisma.user.findUnique({
+
+      where:{
+        email: session.user.email
+      }
+
+    })
+
+
+
+
+  if(!user){
+
+    return NextResponse.json(
+      {
+        error:"User not found"
+      },
+      {
+        status:404
+      }
+    )
+
+  }
+
+
+
+
+
+
+  const existingHome =
+    await prisma.homeMember.findUnique({
+
+      where:{
+        userId:user.id
+      }
+
+    })
+
+
+
+  if(existingHome){
+
+    return NextResponse.json(
+      {
+        error:"You already belong to a home"
+      },
+      {
+        status:400
+      }
+    )
+
+  }
+
+
+
+
+
 
   const pendingHome =
     await prisma.pendingHome.findUnique({
 
-      where: {
-        inviteCode: code,
-      },
+      where:{
+        inviteCode:code
+      }
 
     })
 
 
 
-  if (!pendingHome) {
+
+  if(!pendingHome){
 
     return NextResponse.json(
       {
-        error: "Invalid or expired code",
+        error:"Invalid or expired code"
       },
       {
-        status: 404,
+        status:404
       }
     )
 
@@ -127,26 +165,27 @@ export async function POST(request: Request) {
 
 
 
-  // Check expiry
 
-  if (pendingHome.expiresAt < new Date()) {
+
+
+  if(pendingHome.expiresAt < new Date()){
 
 
     await prisma.pendingHome.delete({
 
-      where: {
-        id: pendingHome.id,
-      },
+      where:{
+        id:pendingHome.id
+      }
 
     })
 
 
     return NextResponse.json(
       {
-        error: "Code expired",
+        error:"Code expired"
       },
       {
-        status: 400,
+        status:400
       }
     )
 
@@ -154,16 +193,17 @@ export async function POST(request: Request) {
 
 
 
-  // Prevent creator joining own code
 
-  if (pendingHome.creatorId === user.id) {
+
+
+  if(pendingHome.creatorId === user.id){
 
     return NextResponse.json(
       {
-        error: "You cannot join your own home",
+        error:"You cannot join your own home"
       },
       {
-        status: 400,
+        status:400
       }
     )
 
@@ -171,58 +211,110 @@ export async function POST(request: Request) {
 
 
 
-  // Create actual home
-
-  const home =
-    await prisma.home.create({
-
-      data: {
-
-        name: "New ARiya Home 🏠",
-
-        inviteCode: code,
-
-
-        members: {
-
-          create: [
-
-            {
-              userId: pendingHome.creatorId,
-            },
-
-
-            {
-              userId: user.id,
-            },
-
-          ],
-
-        },
-
-      },
-
-    })
 
 
 
-  // Remove waiting room
 
-  await prisma.pendingHome.delete({
+  // Save joining user's nickname
 
-    where: {
-      id: pendingHome.id,
+  await prisma.user.update({
+
+    where:{
+      id:user.id
     },
+
+    data:{
+      nickname
+    }
 
   })
 
 
 
+
+
+const creator =
+  await prisma.user.findUnique({
+
+    where:{
+      id: pendingHome.creatorId
+    }
+
+  })
+
+  const home =
+    await prisma.home.create({
+
+      data:{
+
+
+        name:"ARiya Home 🏠",
+
+
+        inviteCode:code,
+
+
+
+        members:{
+
+
+          create:[
+
+{
+
+ userId:
+   pendingHome.creatorId,
+
+ nickname:
+   creator?.nickname
+
+},
+
+
+
+            {
+
+              userId:
+                user.id,
+
+              nickname
+
+            }
+
+
+          ]
+
+        }
+
+
+      }
+
+    })
+
+
+
+
+
+
+  await prisma.pendingHome.delete({
+
+    where:{
+      id:pendingHome.id
+    }
+
+  })
+
+
+
+
+
+
+
   return NextResponse.json({
 
-    success: true,
+    success:true,
 
-    homeId: home.id,
+    homeId:home.id
 
   })
 

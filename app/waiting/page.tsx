@@ -1,14 +1,98 @@
 "use client"
 
-import { useSearchParams } from "next/navigation"
+import { useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 
 export default function WaitingPage() {
 
 
+  const router = useRouter()
+
   const searchParams = useSearchParams()
 
   const code = searchParams.get("code")
+
+
+
+  useEffect(() => {
+
+
+    if (!code) return
+
+
+
+    const checkHome = async () => {
+
+
+      try {
+
+
+        const res =
+          await fetch(
+            `/api/home/status?code=${code}`
+          )
+
+
+
+        const data =
+          await res.json()
+
+
+
+        console.log("Home status:", data)
+
+
+
+        if (data.joined) {
+
+
+          router.push("/home")
+
+
+        }
+
+
+
+      } catch(error) {
+
+
+        console.log(
+          "Checking home failed",
+          error
+        )
+
+
+      }
+
+
+    }
+
+
+
+
+    // Check immediately once
+    checkHome()
+
+
+
+    // Then every 3 seconds
+    const interval =
+      setInterval(
+        checkHome,
+        3000
+      )
+
+
+
+    return () =>
+      clearInterval(interval)
+
+
+
+  }, [code, router])
+
+
 
 
 
@@ -24,6 +108,7 @@ export default function WaitingPage() {
 
       {/* Background overlay */}
       <div className="absolute inset-0 bg-black/50 pointer-events-none"></div>
+
 
 
 
@@ -52,6 +137,7 @@ export default function WaitingPage() {
 
 
 
+
         <div className="mt-8 p-6 bg-white/90 backdrop-blur rounded-xl shadow">
 
 
@@ -70,7 +156,9 @@ export default function WaitingPage() {
           </h2>
 
 
+
         </div>
+
 
 
 
@@ -79,6 +167,14 @@ export default function WaitingPage() {
         <p className="mt-8 text-white text-lg">
 
           Waiting for your partner to join ❤️
+
+        </p>
+
+
+
+        <p className="mt-3 text-white/80">
+
+          Checking every few seconds...
 
         </p>
 

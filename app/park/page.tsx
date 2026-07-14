@@ -14,21 +14,38 @@ export default function ParkPage() {
 
   const [joinCode, setJoinCode] = useState("")
 
-  const [message, setMessage] = useState("")
+const [nickname, setNickname] = useState("")
+
+const [message, setMessage] = useState("")
 
 
 
   async function createHome() {
 
+    if(!nickname.trim()){
+
+  setMessage("Please choose a nickname ❤️")
+  return
+
+}
+
     setLoading(true)
 
 
     const res = await fetch(
-      "/api/home/create",
-      {
-        method: "POST",
-      }
-    )
+  "/api/home/create",
+  {
+    method: "POST",
+
+    headers:{
+      "Content-Type":"application/json",
+    },
+
+    body: JSON.stringify({
+      nickname,
+    }),
+  }
+)
 
 
     const data = await res.json()
@@ -58,6 +75,13 @@ export default function ParkPage() {
 
   async function joinHome() {
 
+    if(!nickname.trim()){
+
+  setMessage("Please choose a nickname ❤️")
+  return
+
+}
+
 
     setLoading(true)
 
@@ -74,9 +98,11 @@ export default function ParkPage() {
 
         body: JSON.stringify({
 
-          code: joinCode,
+  code: joinCode,
 
-        }),
+  nickname,
+
+}),
 
       }
     )
@@ -176,9 +202,9 @@ export default function ParkPage() {
     drop-shadow-lg
   "
 >
-  Get a Home,
+  Stau Connected,
   <br />
-  Stay together ❤️
+  Stay Together ❤️
 </p>
 
 </div>
@@ -186,6 +212,35 @@ export default function ParkPage() {
 
 </div>
       <div className="mt-10 flex flex-col gap-6 w-80">
+
+        <div className="bg-white/20 backdrop-blur-md rounded-xl p-4">
+
+<p className="text-white font-semibold mb-2">
+Choose your nickname ✨
+</p>
+
+
+<input
+
+value={nickname}
+
+onChange={(e)=>setNickname(e.target.value)}
+
+placeholder="Example: Boxer"
+
+className="
+w-full
+px-4
+py-3
+rounded-xl
+outline-none
+text-black
+font-semibold
+"
+
+/>
+
+</div>
 
 
 
@@ -214,67 +269,50 @@ export default function ParkPage() {
         <div className="bg-white/20 backdrop-blur-md rounded-xl p-4">
 
 
-          <input
+<input
 
-            value={joinCode}
+value={joinCode}
 
-            onChange={(e)=>setJoinCode(e.target.value)}
+onChange={(e)=>setJoinCode(e.target.value)}
 
-            placeholder="Enter AR-XXXXXX"
+placeholder="Enter AR-XXXXXX"
 
-            
-  className="
-    text-3xl
-    font-bold
-    bg-gradient-to-r
-    from-pink-400
-    via-green-400
-    via-blue-400
-    to-pink-400
-    bg-[length:200%_200%]
-    bg-clip-text
-    text-transparent
-    animate-gradient
-    drop-shadow-lg
+className="
+w-full
+px-4
+py-3
+rounded-xl
+outline-none
+"
 
-            w-full
-            px-4
-            py-3
-            rounded-xl
-            outline-none
-            "
-          />
+/>
 
 
+<button
 
-          <button
+onClick={joinHome}
 
-            onClick={joinHome}
+className="
+mt-3
+w-full
+px-6
+py-3
+rounded-xl
+bg-white
+text-black
+font-semibold
+hover:scale-105
+transition
+"
 
-            className="
-            mt-3
-            w-full
-            px-6
-            py-3
-            rounded-xl
-            bg-white
-            text-black
-            font-semibold
-            hover:scale-105
-            transition
-            "
+>
 
-          >
+❤️ Join Home
 
-            ❤️ Join Home
-
-
-          </button>
+</button>
 
 
-
-        </div>
-
+</div>
 
       </div>
 
