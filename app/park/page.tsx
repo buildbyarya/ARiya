@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
 
@@ -18,7 +18,50 @@ const [nickname, setNickname] = useState("")
 
 const [message, setMessage] = useState("")
 
+const [createdCode, setCreatedCode] = useState("")
 
+useEffect(()=>{
+
+
+  if(!createdCode){
+    return
+  }
+
+
+  const interval = setInterval(async()=>{
+
+
+    const res = await fetch(
+      `/api/home/check?code=${createdCode}`
+    )
+
+
+    const data = await res.json()
+
+
+    if(data.joined){
+
+      router.push("/home")
+
+    }
+
+
+  },3000)
+
+
+
+  return ()=>clearInterval(interval)
+
+
+},[createdCode])
+
+function copyCode(){
+
+  navigator.clipboard.writeText(createdCode)
+
+  setMessage("Invite code copied ✨")
+
+}
 
   async function createHome() {
 
@@ -53,11 +96,9 @@ const [message, setMessage] = useState("")
 
     if (data.inviteCode) {
 
-      router.push(
-        `/waiting?code=${data.inviteCode}`
-      )
+  setCreatedCode(data.inviteCode)
 
-    }
+}
     else {
 
       setMessage(data.error)
@@ -202,7 +243,7 @@ const [message, setMessage] = useState("")
     drop-shadow-lg
   "
 >
-  Stau Connected,
+  Stay Connected,
   <br />
   Stay Together ❤️
 </p>
@@ -283,10 +324,11 @@ px-4
 py-3
 rounded-xl
 outline-none
+font-bold
+gradient-text-input
 "
 
 />
-
 
 <button
 
@@ -321,15 +363,81 @@ transition
 
 
       {
-        message &&
+createdCode && (
 
-        <p className="mt-6 text-red-300 font-semibold">
+<div
+className="
+mt-6
+bg-white/20
+backdrop-blur-md
+rounded-xl
+p-5
+text-white
+"
+>
 
-          {message}
+<p className="font-bold text-xl">
+🏡 Home Created!
+</p>
 
-        </p>
 
-      }
+<p className="mt-3">
+Share this code with your partner:
+</p>
+
+
+<p
+className="
+mt-3
+text-2xl
+font-bold
+tracking-widest
+"
+>
+{createdCode}
+</p>
+
+
+<button
+
+onClick={copyCode}
+
+className="
+mt-4
+px-5
+py-2
+rounded-xl
+bg-white
+text-black
+font-semibold
+hover:scale-105
+transition
+"
+
+>
+
+📋 Copy Code
+
+</button>
+
+
+</div>
+
+)
+}
+
+
+
+{
+message &&
+
+<p className="mt-6 text-green-300 font-semibold">
+
+{message}
+
+</p>
+
+}
 
 
 

@@ -248,7 +248,7 @@ const creator =
       data:{
 
 
-        name:"ARiya Home 🏠",
+        name:"ARiya Home",
 
 
         inviteCode:code,
