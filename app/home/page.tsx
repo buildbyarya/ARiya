@@ -1,3 +1,5 @@
+import RoomGrid from "@/components/home/RoomGrid"
+
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 
@@ -13,7 +15,6 @@ export default async function HomePage() {
     await getServerSession(authOptions)
 
 
-
   if (!session?.user?.email) {
 
     redirect("/login")
@@ -21,32 +22,28 @@ export default async function HomePage() {
   }
 
 
-
   const user =
     await prisma.user.findUnique({
 
-      where:{
-        email: session.user.email
-      }
+      where: {
+        email: session.user.email,
+      },
 
     })
 
 
-
-  if(!user){
+  if (!user) {
 
     redirect("/login")
 
   }
 
 
-
   const home =
     await getUserHome(user.id)
 
 
-
-  if(!home){
+  if (!home) {
 
     redirect("/park")
 
@@ -68,6 +65,7 @@ export default async function HomePage() {
       via-black
       to-pink-950
       px-6
+      pt-24
       "
     >
 
@@ -119,7 +117,6 @@ export default async function HomePage() {
 
 
 
-
         <div className="mt-8">
 
 
@@ -141,19 +138,16 @@ export default async function HomePage() {
 
 
             {
-              home.members.map((member)=>(
+              home.members.map((member) => (
 
                 <div
-
                   key={member.id}
-
                   className="
                   bg-white/10
                   rounded-xl
                   px-5
                   py-3
                   "
-
                 >
 
                   👤 {member.nickname ?? "Unknown"}
@@ -161,6 +155,7 @@ export default async function HomePage() {
                 </div>
 
               ))
+
             }
 
 
@@ -171,76 +166,7 @@ export default async function HomePage() {
 
 
 
-
-
-
-        <div
-          className="
-          mt-8
-          grid
-          gap-3
-          "
-        >
-
-
-          <button
-            className="
-            bg-white/20
-            rounded-xl
-            py-3
-            hover:scale-105
-            transition
-            "
-          >
-            🎬 Watch Together
-          </button>
-
-
-
-          <button
-            className="
-            bg-white/20
-            rounded-xl
-            py-3
-            hover:scale-105
-            transition
-            "
-          >
-            🎵 Listen Together
-          </button>
-
-
-
-          <button
-            className="
-            bg-white/20
-            rounded-xl
-            py-3
-            hover:scale-105
-            transition
-            "
-          >
-            💬 Chat
-          </button>
-
-
-
-          <button
-            className="
-            bg-white/20
-            rounded-xl
-            py-3
-            hover:scale-105
-            transition
-            "
-          >
-            🔔 Activity
-          </button>
-
-
-
-        </div>
-
+        <RoomGrid />
 
 
       </div>
@@ -249,5 +175,4 @@ export default async function HomePage() {
     </main>
 
   )
-
 }
