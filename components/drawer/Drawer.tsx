@@ -1,7 +1,7 @@
 "use client"
 
-import DrawerProfile from "./Profile/DrawerProfile"
-import DrawerMenu from "./Menu/DrawerMenu"
+import DrawerProfile from "./profile/DrawerProfile"
+import DrawerMenu from "./menu/DrawerMenu"
 
 
 type DrawerProps = {

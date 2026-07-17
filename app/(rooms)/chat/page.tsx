@@ -1,9 +1,40 @@
-export default function WatchPage() {
+import PageHeader from "@/components/common/PageHeader"
+
+export default function ChatPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <h1 className="text-4xl font-bold">
-        Chat Room
-      </h1>
+    <main
+      className="
+      min-h-screen
+      bg-gradient-to-br
+      from-purple-950
+      via-black
+      to-pink-950
+      p-6
+      "
+    >
+      <div className="mx-auto max-w-md">
+
+        <PageHeader
+          title="💬 Chat"
+          backHref="/home"
+        />
+
+        <div className="grid gap-4">
+
+          <button
+            className="
+            rounded-2xl
+            bg-white/10
+            p-5
+            text-left
+            "
+          >
+            💬 Messages
+          </button>
+
+        </div>
+
+      </div>
     </main>
   )
 }
