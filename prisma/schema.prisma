@@ -40,6 +40,8 @@ model Home {
   createdAt DateTime @default(now())
 
   members HomeMember[]
+
+  library LibraryVideo[]
 }
 
 model PendingHome {
@@ -77,6 +79,30 @@ model HomeMember {
   joinedAt DateTime @default(now())
 
   @@unique([userId, homeId])
+}
+
+model LibraryVideo {
+  id String @id @default(cuid())
+
+  homeId String
+
+  videoId String
+
+  title String
+
+  thumbnail String
+
+  channel String
+
+  type String
+
+  createdAt DateTime @default(now())
+
+  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+
+  @@index([homeId])
+
+  @@index([type])
 }
 
 model Account {

@@ -1,5 +1,7 @@
 "use client"
 
+import PlayerActions from "@/components/watch/youtube/PlayerActions"
+
 import { useSearchParams } from "next/navigation"
 
 import PageHeader from "@/components/common/PageHeader"
