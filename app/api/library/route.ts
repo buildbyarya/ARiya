@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
 
+import { LibraryVideoType } from "@prisma/client"
+
 import { getServerSession } from "next-auth"
 
 import { authOptions } from "@/lib/auth"
-
+import {
+  addVideoToLibrary,
+  getLibrary,
+  removeVideo,
+} from "@/lib/library"
 import { prisma } from "@/lib/prisma"
 
 
 
-export async function GET() {
+export async function GET(request: NextRequest) {
 
   const session =
     await getServerSession(authOptions)
@@ -38,18 +44,24 @@ export async function GET() {
 
   }
 
-  const videos =
-    await prisma.libraryVideo.findMany({
+  const requestedType = request.nextUrl.searchParams.get("type")
 
-      where: {
-        homeId: user.homeMembership.homeId,
-      },
+  if (
+    requestedType !== null &&
+    !Object.values(LibraryVideoType).includes(
+      requestedType as LibraryVideoType
+    )
+  ) {
+    return NextResponse.json(
+      { error: "Invalid library type" },
+      { status: 400 }
+    )
+  }
 
-      orderBy: {
-        createdAt: "desc",
-      },
-
-    })
+  const videos = await getLibrary(
+    user.homeMembership.homeId,
+    (requestedType as LibraryVideoType | null) ?? undefined
+  )
 
   return NextResponse.json(videos)
 
@@ -98,33 +110,61 @@ export async function POST(
   const body =
     await request.json()
 
-  const video =
-    await prisma.libraryVideo.create({
+  const { videoId, type } = body
 
-      data: {
+  if (
+    typeof videoId !== "string" ||
+    !Object.values(LibraryVideoType).includes(type)
+  ) {
+    return NextResponse.json(
+      { error: "Invalid library video" },
+      { status: 400 }
+    )
+  }
 
-        homeId:
-          user.homeMembership.homeId,
-
-        videoId:
-          body.videoId,
-
-        title:
-          body.title,
-
-        thumbnail:
-          body.thumbnail,
-
-        channel:
-          body.channel,
-
-        type:
-          body.type,
-
-      },
-
-    })
+  const video = await addVideoToLibrary({
+    homeId: user.homeMembership.homeId,
+    videoId,
+    type,
+  })
 
   return NextResponse.json(video)
 
+}
+
+export async function DELETE(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const id = request.nextUrl.searchParams.get("id")
+
+  if (!id) {
+    return NextResponse.json(
+      { error: "Library video ID is required" },
+      { status: 400 }
+    )
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    include: { homeMembership: true },
+  })
+
+  if (!user?.homeMembership) {
+    return NextResponse.json({ error: "Home not found" }, { status: 404 })
+  }
+
+  const removed = await removeVideo(id, user.homeMembership.homeId)
+
+  if (!removed) {
+    return NextResponse.json(
+      { error: "Library video not found" },
+      { status: 404 }
+    )
+  }
+
+  return NextResponse.json({ success: true })
 }
