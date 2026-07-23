@@ -1,18 +1,80 @@
-# ARiya Decisions
+# ARiya Database
 
-> This document records important architectural and product decisions.
+> This document explains the purpose of every database model in ARiya.
 >
-> Unlike CHANGELOG.md, this file explains *why* a decision was made so future developers and AI assistants understand the reasoning.
+> It focuses on why each model exists rather than the Prisma implementation.
 
 ---
 
-# 2026-07-24
+# Design Principles
 
-## Smart Playlist Architecture
+The database should remain simple.
 
-### Decision
+Avoid creating new tables unless they solve a real problem.
 
-Every media collection in ARiya is represented by a Playlist.
+Store only the data ARiya truly owns.
+
+Information that can always be retrieved from external services (such as YouTube video titles or thumbnails) should not be permanently stored unless there is a clear benefit.
+
+---
+
+# User
+
+## Purpose
+
+Represents a Google account.
+
+A User can belong to only one Home at a time.
+
+The User is responsible for authentication and account-level information.
+
+---
+
+# Home
+
+## Purpose
+
+Represents one relationship.
+
+A Home contains exactly two members.
+
+Everything shared between partners belongs to the Home.
+
+Examples:
+
+- Shared Playlists
+- Watch Later
+- Gallery
+- Shared Notes
+- Calendar
+- Future Watch Together sessions
+
+---
+
+# HomeMember
+
+## Purpose
+
+Represents one user's membership inside a Home.
+
+This stores information that belongs to the relationship instead of the account.
+
+Examples:
+
+- Nickname
+- Avatar (future)
+- Personal Playlists
+- Future customization
+
+If a member leaves a Home, these memories remain part of that chapter and do not move into a future Home.
+
+---
+
+# Playlist
+
+## Purpose
+
+Represents every media collection in ARiya.
 
 Examples:
 
@@ -21,89 +83,66 @@ Examples:
 - Shared Playlists
 - Personal Playlists
 
-### Reason
-
-All of these features organize YouTube videos in similar ways.
-
-Using one reusable Playlist system keeps the application simple, consistent, and easier to maintain.
+Instead of creating different systems for each feature, every collection is represented as a Playlist.
 
 ---
 
-## No LibraryVideo Model
+# PlaylistVideo
 
-### Decision
+## Purpose
 
-There will be no separate LibraryVideo model.
+Represents a YouTube video inside a Playlist.
 
-PlaylistVideo will store the YouTube video ID directly.
+Stores:
 
-### Reason
+- Playlist
+- YouTube Video ID
+- Order
+- Date Added
 
-ARiya does not permanently store YouTube metadata.
-
-Video titles, thumbnails, channels, and other details are retrieved from YouTube when needed.
-
-Adding another database model would increase complexity without providing enough benefit.
-
----
-
-## Personal Playlists
-
-### Decision
-
-Personal Playlists belong to HomeMember instead of User.
-
-### Reason
-
-Personal playlists belong to a relationship, not a lifelong account.
-
-When a Home ends, both partners begin a new chapter.
-
-Old relationship memories should not automatically appear in a future Home.
+Video metadata is retrieved from YouTube when needed.
 
 ---
 
-## Shared Watch Later
+# Smart Playlist System
 
-### Decision
+Every Playlist has two important properties.
 
-Watch Later is shared by both partners.
+## Type
 
-Removing a video removes it for everyone in the Home.
+Examples:
 
-### Reason
+- SYSTEM
+- CUSTOM
 
-Watch Later represents videos the couple may want to watch together.
-
-If private saving is needed, users should use Personal Playlists instead.
-
----
-
-## Liked Videos
-
-### Decision
-
-Liked Videos are personal.
-
-### Reason
-
-Likes are often casual or accidental.
-
-Keeping them personal avoids cluttering the shared experience.
-
----
-
-## Library Structure
-
-### Decision
-
-Library contains:
+SYSTEM playlists include:
 
 - Watch Later
 - Liked Videos
-- Playlists
-- My Playlists
 
-### Reason
+CUSTOM playlists are created by users.
 
-This layout is familiar, simple, and easy to understand while clearly separating shared and personal collections.
+---
+
+## Visibility
+
+Examples:
+
+- SHARED
+- PERSONAL
+
+Shared playlists belong to the Home.
+
+Personal playlists belong to the HomeMember.
+
+---
+
+# Relationship Philosophy
+
+Shared content belongs to the Home.
+
+Personal content belongs to the HomeMember.
+
+Nothing belongs to a previous relationship after leaving a Home.
+
+Every new Home starts a new chapter.

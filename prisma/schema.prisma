@@ -8,36 +8,39 @@ datasource db {
 }
 
 model User {
-  id                    String             @id @default(cuid())
-  name                  String?
-  email                 String             @unique
-  emailVerified         DateTime?
-  image                 String?
-  nickname              String?
-  gender                String?
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
-  accounts              Account[]
-  sessions              Session[]
-  homeMembership        HomeMember?
-  pendingHomes          PendingHome[]      @relation("CreatedPendingHomes")
-  joinedPendingHomes    PendingHome[]      @relation("JoinedPendingHomes")
-  noteBooks             NoteBook[]
-  sentQuickNotes        QuickNote[]        @relation("QuickNoteSender")
-  receivedQuickNotes    QuickNote[]        @relation("QuickNoteRecipient")
-  watchInvitesSent      WatchInvite[]      @relation("WatchInviteSender")
-  watchInvitesReceived  WatchInvite[]      @relation("WatchInviteRecipient")
-  watchMemberships      WatchRoomMember[]
-  watchSetting          WatchSetting?
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  nickname      String?
+  gender        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts             Account[]
+  sessions             Session[]
+  homeMembership       HomeMember?
+  pendingHomes         PendingHome[]      @relation("CreatedPendingHomes")
+  joinedPendingHomes   PendingHome[]      @relation("JoinedPendingHomes")
+  noteBooks            NoteBook[]
+  sentQuickNotes       QuickNote[]        @relation("QuickNoteSender")
+  receivedQuickNotes   QuickNote[]        @relation("QuickNoteRecipient")
+  watchInvitesSent     WatchInvite[]      @relation("WatchInviteSender")
+  watchInvitesReceived WatchInvite[]      @relation("WatchInviteRecipient")
+  watchMemberships     WatchRoomMember[]
+  watchSetting         WatchSetting?
 }
 
 model Home {
-  id          String         @id @default(cuid())
-  name        String
-  inviteCode  String         @unique
-  createdAt   DateTime       @default(now())
+  id         String   @id @default(cuid())
+  name       String
+  inviteCode String   @unique
+  createdAt  DateTime @default(now())
+
   members     HomeMember[]
   library     LibraryVideo[]
+  playlists   Playlist[]
   noteBooks   NoteBook[]
   quickNotes  QuickNote[]
   watchRooms  WatchRoom[]
@@ -45,40 +48,44 @@ model Home {
 }
 
 model PendingHome {
-  id                   String   @id @default(cuid())
-  inviteCode           String   @unique
-  creatorId            String
-  partnerId            String?
-  expiresAt            DateTime
-  createdAt            DateTime @default(now())
-  creator              User     @relation("CreatedPendingHomes", fields: [creatorId], references: [id], onDelete: Cascade)
-  partner              User?    @relation("JoinedPendingHomes", fields: [partnerId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  inviteCode String   @unique
+  creatorId  String
+  partnerId  String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  creator User  @relation("CreatedPendingHomes", fields: [creatorId], references: [id], onDelete: Cascade)
+  partner User? @relation("JoinedPendingHomes", fields: [partnerId], references: [id], onDelete: Cascade)
 
   @@index([inviteCode])
 }
 
 model HomeMember {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  homeId    String
-  nickname  String?
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  home      Home     @relation(fields: [homeId], references: [id], onDelete: Cascade)
-  joinedAt  DateTime @default(now())
+  id       String   @id @default(cuid())
+  userId   String   @unique
+  homeId   String
+  nickname String?
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  home      Home       @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  playlists Playlist[]
+  joinedAt  DateTime   @default(now())
 
   @@unique([userId, homeId])
 }
 
 model LibraryVideo {
-  id         String          @id @default(cuid())
-  homeId     String
-  videoId    String
-  title      String?
-  thumbnail  String?
-  channel    String?
-  type       LibraryVideoType
-  createdAt  DateTime        @default(now())
-  home       Home            @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  id        String          @id @default(cuid())
+  homeId    String
+  videoId   String
+  title     String?
+  thumbnail String?
+  channel   String?
+  type      LibraryVideoType
+  createdAt DateTime        @default(now())
+
+  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
 
   @@unique([homeId, videoId, type])
   @@index([homeId])
@@ -88,6 +95,52 @@ model LibraryVideo {
 enum LibraryVideoType {
   WATCH_LATER
   LIKED
+}
+
+model Playlist {
+  id            String              @id @default(cuid())
+  name          String
+  type          PlaylistType
+  visibility    PlaylistVisibility
+  systemType    SystemPlaylistType?
+  homeId        String?
+  homeMemberId  String?
+
+  home       Home?       @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  homeMember HomeMember? @relation(fields: [homeMemberId], references: [id], onDelete: Cascade)
+  videos     PlaylistVideo[]
+
+  createdAt DateTime @default(now())
+
+  @@index([homeId])
+  @@index([homeMemberId])
+  @@index([systemType])
+}
+
+model PlaylistVideo {
+  id             String   @id @default(cuid())
+  playlistId     String
+  youtubeVideoId String
+  addedAt        DateTime @default(now())
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, youtubeVideoId])
+}
+
+enum PlaylistType {
+  SYSTEM
+  CUSTOM
+}
+
+enum SystemPlaylistType {
+  WATCH_LATER
+  LIKED_VIDEOS
+}
+
+enum PlaylistVisibility {
+  PERSONAL
+  SHARED
 }
 
 model NoteBook {
@@ -100,8 +153,9 @@ model NoteBook {
   isPrivate       Boolean  @default(false)
   backgroundImage String?
   updatedAt       DateTime @updatedAt
-  home            Home     @relation(fields: [homeId], references: [id], onDelete: Cascade)
-  owner           User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  home  Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@unique([homeId, ownerId, type])
   @@index([homeId, type])
@@ -116,9 +170,10 @@ model QuickNote {
   readCount   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  home        Home     @relation(fields: [homeId], references: [id], onDelete: Cascade)
-  sender      User     @relation("QuickNoteSender", fields: [senderId], references: [id], onDelete: Cascade)
-  recipient   User     @relation("QuickNoteRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  home      Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  sender    User @relation("QuickNoteSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("QuickNoteRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
 
   @@unique([homeId, senderId])
   @@index([recipientId])
@@ -128,26 +183,28 @@ model Account {
   id                String   @id @default(cuid())
   userId            String
   type              String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken  String   @unique
-  userId        String
-  expires       DateTime
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -159,75 +216,80 @@ model VerificationToken {
 }
 
 model WatchRoom {
-  id            String              @id @default(cuid())
-  homeId        String
-  videoId       String
-  position      Float               @default(0)
-  playing       Boolean             @default(false)
-  volume        Int                 @default(100)
-  playbackRate  Float               @default(1)
-  version       Int                 @default(0)
-  lastActionAt  DateTime            @default(now())
-  createdAt     DateTime            @default(now())
-  home          Home                @relation(fields: [homeId], references: [id], onDelete: Cascade)
-  members       WatchRoomMember[]
-  invites       WatchInvite[]
-  chatMessages  WatchChatMessage[]
+  id           String   @id @default(cuid())
+  homeId       String
+  videoId      String
+  position     Float    @default(0)
+  playing      Boolean  @default(false)
+  volume       Int      @default(100)
+  playbackRate Float    @default(1)
+  version      Int      @default(0)
+  lastActionAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  home         Home               @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  members      WatchRoomMember[]
+  invites      WatchInvite[]
+  chatMessages WatchChatMessage[]
 
   @@index([homeId])
 }
 
 model WatchRoomMember {
-  id          String     @id @default(cuid())
-  roomId      String
-  userId      String
-  joinedAt    DateTime   @default(now())
-  lastSeenAt  DateTime   @default(now())
-  leftAt      DateTime?
-  room        WatchRoom  @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String    @id @default(cuid())
+  roomId     String
+  userId     String
+  joinedAt   DateTime  @default(now())
+  lastSeenAt DateTime  @default(now())
+  leftAt     DateTime?
+
+  room WatchRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([roomId, userId])
   @@index([userId])
 }
 
 model WatchChatMessage {
-  id             String    @id @default(cuid())
+  id             String   @id @default(cuid())
   roomId         String
   senderId       String
   senderNickname String
-  content        String    @db.Text
-  createdAt      DateTime  @default(now())
-  room           WatchRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  content        String   @db.Text
+  createdAt      DateTime @default(now())
+
+  room WatchRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
   @@index([roomId, createdAt])
 }
 
 model WatchInvite {
-  id          String    @id @default(cuid())
-  homeId      String
-  roomId      String
-  senderId    String
-  recipientId  String
-  videoId     String
-  position    Float     @default(0)
-  expiresAt   DateTime
-  status      String    @default("PENDING")
+  id            String    @id @default(cuid())
+  homeId        String
+  roomId        String
+  senderId      String
+  recipientId   String
+  videoId       String
+  position      Float     @default(0)
+  expiresAt     DateTime
+  status        String    @default("PENDING")
   customMessage String?
-  createdAt   DateTime  @default(now())
-  respondedAt DateTime?
-  home        Home      @relation(fields: [homeId], references: [id], onDelete: Cascade)
-  room        WatchRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  sender      User      @relation("WatchInviteSender", fields: [senderId], references: [id], onDelete: Cascade)
-  recipient   User      @relation("WatchInviteRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  respondedAt   DateTime?
+
+  home      Home      @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  room      WatchRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender    User      @relation("WatchInviteSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User      @relation("WatchInviteRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
 
   @@index([recipientId, status])
   @@index([expiresAt])
 }
 
 model WatchSetting {
-  id            String  @id @default(cuid())
-  userId        String  @unique
-  expiryMinutes Int     @default(10)
-  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String @id @default(cuid())
+  userId        String @unique
+  expiryMinutes Int    @default(10)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
