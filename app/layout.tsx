@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 
 export const metadata: Metadata = {
-  title: "ARiya",
+  title: "Satella",
   description: "A shared home for couples",
 };
 
