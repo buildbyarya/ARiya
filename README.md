@@ -1,4 +1,4 @@
-# ARiya
+# Satella
 
 A shared digital home for long distance couples.
 
