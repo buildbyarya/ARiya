@@ -2,7 +2,7 @@
 
 import PlayerActions from "@/components/watch/youtube/PlayerActions"
 
-import { useSearchParams } from "next/navigation"
+import { Suspense, useSearchParams } from "next/navigation"
 
 import PageHeader from "@/components/common/PageHeader"
 
@@ -17,7 +17,7 @@ import {
 
 
 
-export default function PlayerPage() {
+function PlayerContent() {
 
   const searchParams = useSearchParams()
 
@@ -254,4 +254,12 @@ export default function PlayerPage() {
 
   )
 
+}
+
+export default function PlayerPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen flex items-center justify-center"><p>Loading...</p></main>}>
+      <PlayerContent />
+    </Suspense>
+  )
 }
