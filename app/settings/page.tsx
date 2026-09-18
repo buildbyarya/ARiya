@@ -1,0 +1,3 @@
+import Link from "next/link"
+import PageHeader from "@/components/common/PageHeader"
+export default function SettingsPage(){return <main className="min-h-screen bg-gradient-to-br from-purple-950 via-black to-pink-950 p-6"><div className="mx-auto max-w-md"><PageHeader title="⚙ Settings" backHref="/home"/><div className="mt-6 grid gap-3"><Link href="/account-settings" className="rounded-2xl bg-white/10 p-5 transition hover:bg-white/20 active:scale-95">Account Settings</Link><div className="rounded-2xl bg-white/10 p-5 text-white/60">More settings coming soon.</div></div></div></main>}
