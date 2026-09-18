@@ -41,7 +41,7 @@ export default function PageHeader({
       className="
       sticky
       top-0
-      z-50
+      z-30
       backdrop-blur-md
       bg-black/30
       border-b
