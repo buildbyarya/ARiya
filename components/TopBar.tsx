@@ -42,9 +42,7 @@ export default function TopBar({
               ←
             </Link>
           )}
-          <button className="rounded-xl px-2 py-1 text-xl transition hover:bg-white/10" aria-label="Notifications">
-            🔔
-          </button>
+          <NotificationsBell />
         </div>
       </div>
     </header>
