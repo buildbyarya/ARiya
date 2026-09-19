@@ -11,6 +11,7 @@ type NoteData = {
   content: string
   checkboxMode: boolean
   isPrivate: boolean
+  backgroundImage?: string | null
   canEdit: boolean
   locked: boolean
 }
@@ -36,7 +37,7 @@ export default function NotesClientPage({ mode, title }: { mode: Mode; title: st
     return () => clearInterval(timer)
   }, [load, mode])
 
-  async function changeSettings(next: { checkboxMode?: boolean; isPrivate?: boolean }) {
+  async function changeSettings(next: { checkboxMode?: boolean; isPrivate?: boolean; backgroundImage?: string | null }) {
     if (!data) return
     const response = await fetch("/api/notes", {
       method: "PATCH",
@@ -64,6 +65,7 @@ export default function NotesClientPage({ mode, title }: { mode: Mode; title: st
             mode={mode === "shared" ? "shared" : "personal"}
             checkboxMode={data.checkboxMode}
             isPrivate={data.isPrivate}
+            backgroundImage={data.backgroundImage}
             onChange={changeSettings}
           />
         ) : null}
@@ -75,6 +77,7 @@ export default function NotesClientPage({ mode, title }: { mode: Mode; title: st
         initialCheckboxMode={data.checkboxMode}
         canEdit={data.canEdit}
         locked={data.locked}
+        backgroundImage={data.backgroundImage}
       />
     </>
   )
