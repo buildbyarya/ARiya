@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import NotificationsBell from "@/components/home/NotificationsBell"
 
 type TopBarProps = {
   isOpen?: boolean
