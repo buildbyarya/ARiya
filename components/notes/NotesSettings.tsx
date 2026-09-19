@@ -10,10 +10,8 @@ type Props = {
   onChange: (next: { checkboxMode?: boolean; isPrivate?: boolean; backgroundImage?: string | null }) => Promise<void>
 }
 
-export default function NotesSettings({ mode, checkboxMode, isPrivate, onChange }: Props) {
+export default function NotesSettings({ mode, checkboxMode, isPrivate, backgroundImage, onChange }: Props) {
   const [open, setOpen] = useState(false)
-  const currentBackgroundImage = backgroundImage
-
   return (
     <div className="relative">
       <button
