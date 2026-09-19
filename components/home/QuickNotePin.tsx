@@ -79,10 +79,10 @@ export default function QuickNotePin({ initialNote }: { initialNote: Note | null
   return (
     <>
       {note ? (
-        <div className="fixed left-4 top-20 z-30">
+        <div className="fixed right-14 top-2 z-[60]">
           <button
             onClick={openNote}
-            className="relative animate-pulse rounded-full border border-pink-200/20 bg-white/10 p-3 text-3xl shadow-lg shadow-pink-500/20 backdrop-blur-xl transition hover:scale-105"
+            className="relative animate-pulse rounded-full border border-pink-200/20 bg-white/10 p-2 text-2xl shadow-lg shadow-pink-500/20 backdrop-blur-xl transition hover:scale-105"
             aria-label="Open Quick Note"
           >
             📌
@@ -94,7 +94,7 @@ export default function QuickNotePin({ initialNote }: { initialNote: Note | null
       ) : null}
 
       {open ? (
-        <div className="fixed inset-0 z-40 flex items-start justify-start bg-black/45 p-4 pt-32" onClick={closeNote}>
+        <div className="fixed inset-0 z-[70] flex items-start justify-end bg-black/45 p-4 pt-20" onClick={closeNote}>
           <div
             className="w-80 max-w-[calc(100vw-2rem)] rounded-3xl border border-white/10 bg-zinc-950/95 p-5 shadow-2xl backdrop-blur-xl"
             onClick={(event) => event.stopPropagation()}

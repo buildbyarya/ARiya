@@ -1,0 +1,4 @@
+ALTER TABLE "LibraryVideo"
+  ALTER COLUMN "title" DROP NOT NULL,
+  ALTER COLUMN "thumbnail" DROP NOT NULL,
+  ALTER COLUMN "channel" DROP NOT NULL;

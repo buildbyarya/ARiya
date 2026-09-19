@@ -35,14 +35,14 @@ export default function TopBar({
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
           {showBack && (
             <Link href={backHref} className="rounded-xl px-2 py-1 text-2xl transition hover:bg-white/10 active:scale-95" aria-label="Back">
               ←
             </Link>
           )}
           <button className="rounded-xl px-2 py-1 text-xl transition hover:bg-white/10" aria-label="Notifications">
-            ♡
+            🔔
           </button>
         </div>
       </div>
