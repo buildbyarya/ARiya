@@ -26,6 +26,7 @@ export default function QuickNotePin({ initialNote }: { initialNote: Note | null
   const [reading, setReading] = useState(false)
   const [consumed, setConsumed] = useState(false)
   const [shownContent, setShownContent] = useState("")
+  const [shownCreatedAt, setShownCreatedAt] = useState<string | null>(null)
 
   useEffect(() => {
     const timer = setInterval(async () => {
@@ -61,6 +62,7 @@ export default function QuickNotePin({ initialNote }: { initialNote: Note | null
     }
 
     setShownContent(data.note.content)
+    setShownCreatedAt(data.note.createdAt)
     setConsumed(Boolean(data.note.consumed))
     setNote(data.note.consumed ? null : data.note)
     setOpen(true)
@@ -70,6 +72,7 @@ export default function QuickNotePin({ initialNote }: { initialNote: Note | null
   function closeNote() {
     setOpen(false)
     setShownContent("")
+    setShownCreatedAt(null)
     setConsumed(false)
   }
 
@@ -79,7 +82,7 @@ export default function QuickNotePin({ initialNote }: { initialNote: Note | null
         <div className="fixed left-4 top-20 z-30">
           <button
             onClick={openNote}
-            className="animate-pulse rounded-full border border-pink-200/20 bg-white/10 p-3 text-3xl shadow-lg shadow-pink-500/20 backdrop-blur-xl transition hover:scale-105"
+            className="relative animate-pulse rounded-full border border-pink-200/20 bg-white/10 p-3 text-3xl shadow-lg shadow-pink-500/20 backdrop-blur-xl transition hover:scale-105"
             aria-label="Open Quick Note"
           >
             📌
@@ -98,7 +101,7 @@ export default function QuickNotePin({ initialNote }: { initialNote: Note | null
           >
             <div className="flex items-center justify-between text-xs text-white/45">
               <span>Quick Note</span>
-              <span>{formatAge(new Date().toISOString())}</span>
+              <span>{shownCreatedAt ? formatAge(shownCreatedAt) : "Just now"}</span>
             </div>
             <p className="mt-4 whitespace-pre-wrap text-lg leading-7">{shownContent || " "}</p>
             <button
