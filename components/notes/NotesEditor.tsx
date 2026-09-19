@@ -29,6 +29,12 @@ function prepareCheckboxMarkup(html: string) {
   return doc.body.innerHTML
 }
 
+function removeCheckboxMarkup(html: string) {
+  return html
+    .replace(/\sdata-note-item="true"/g, "")
+    .replace(/\sdata-checked="(?:true|false)"/g, "")
+}
+
 export default function NotesEditor({
   mode,
   initialContent,
@@ -48,12 +54,20 @@ export default function NotesEditor({
   const fontSizes = [12, 14, 16, 18, 22, 28, 34]
 
   useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.innerHTML = checkboxMode
-        ? prepareCheckboxMarkup(initialContent)
-        : initialContent || "<div><br></div>"
-    }
-  }, [initialContent, checkboxMode])
+    if (!editorRef.current) return
+    editorRef.current.innerHTML = checkboxMode
+      ? prepareCheckboxMarkup(initialContent)
+      : initialContent || "<div><br></div>"
+  }, [initialContent])
+
+  useEffect(() => {
+    if (!editorRef.current || checkboxMode === initialCheckboxMode) return
+    const current = editorRef.current.innerHTML
+    editorRef.current.innerHTML = initialCheckboxMode
+      ? prepareCheckboxMarkup(current)
+      : removeCheckboxMarkup(current)
+    setCheckboxMode(initialCheckboxMode)
+  }, [initialCheckboxMode, checkboxMode])
 
   useEffect(() => {
     return () => {
@@ -105,9 +119,7 @@ export default function NotesEditor({
   function toggleCheckboxMode() {
     const next = !checkboxMode
     const current = editorRef.current?.innerHTML ?? ""
-    const converted = next
-      ? prepareCheckboxMarkup(current)
-      : current.replace(/\sdata-note-item="true"/g, "").replace(/\sdata-checked="(?:true|false)"/g, "")
+    const converted = next ? prepareCheckboxMarkup(current) : removeCheckboxMarkup(current)
     if (editorRef.current) editorRef.current.innerHTML = converted
     setCheckboxMode(next)
     scheduleSave({ checkboxMode: next })
@@ -149,9 +161,11 @@ export default function NotesEditor({
 
   async function resetNote() {
     if (!window.confirm("Reset this entire notebook? This cannot be undone.")) return
-    if (editorRef.current) editorRef.current.innerHTML = checkboxMode
-      ? prepareCheckboxMarkup("")
-      : "<div><br></div>"
+    if (editorRef.current) {
+      editorRef.current.innerHTML = checkboxMode
+        ? prepareCheckboxMarkup("")
+        : "<div><br></div>"
+    }
     await save()
   }
 
