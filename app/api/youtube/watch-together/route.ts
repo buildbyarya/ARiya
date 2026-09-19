@@ -11,6 +11,7 @@ async function ctx() {
   const membership = await prisma.homeMember.findUnique({ where: { userId: user.id }, include: { home: { include: { members: true } } } })
   return membership ? { user, membership } : null
 }
+const num=(v:any,f:number)=>{const n=Number(v);return Number.isFinite(n)?n:f}
 export async function GET(req: Request) {
   const c = await ctx(); if (!c) return NextResponse.json({error:"Unauthorized"},{status:401})
   const q = new URL(req.url).searchParams; const roomId=q.get("roomId")
@@ -23,70 +24,39 @@ export async function GET(req: Request) {
   const me=room.members.find(m=>m.userId===c.user.id); if(!me)return NextResponse.json({error:"Not in room"},{status:403})
   await prisma.watchRoomMember.update({where:{id:me.id},data:{lastSeenAt:new Date()}})
   const other=room.members.find(m=>m.userId!==c.user.id)
-  return NextResponse.json({room:{id:room.id,videoId:room.videoId,position:room.position,playing:room.playing,volume:room.volume,playbackRate:room.playbackRate,version:room.version,otherPresent:Boolean(other&&!other.leftAt),otherNickname:other?.user.nickname||other?.user.name||"Your partner",otherLeftAt:other?.leftAt?.toISOString()||null}})
+  const elapsed=room.playing?Math.max(0,(Date.now()-room.lastActionAt.getTime())/1000):0
+  return NextResponse.json({room:{id:room.id,videoId:room.videoId,position:room.position+elapsed,playing:room.playing,volume:room.volume,playbackRate:room.playbackRate,version:room.version,otherPresent:Boolean(other&&!other.leftAt),otherNickname:other?.user.nickname||other?.user.name||"Your partner",otherLeftAt:other?.leftAt?.toISOString()||null}})
 }
 export async function POST(req:Request){
   try{
     const c=await ctx()
     if(!c)return NextResponse.json({error:"You are not signed in or your account is not connected to a home."},{status:401})
-    const b=await req.json()
-    const now=new Date()
-
+    const b=await req.json();const now=new Date()
     if(b.action==="create-invite"){
       const videoId=String(b.videoId||"").trim()
       if(!videoId)return NextResponse.json({error:"No YouTube video was selected."},{status:400})
       const other=c.membership.home.members.find(m=>m.userId!==c.user.id)
       if(!other)return NextResponse.json({error:"No partner is connected to your Satella home."},{status:400})
-
       let setting
-      try{
-        setting=await prisma.watchSetting.upsert({where:{userId:c.user.id},create:{userId:c.user.id},update:{}})
-      }catch(e){
-        console.error("Watch Together setting error",e)
-        return NextResponse.json({error:"Could not access Watch Together settings."},{status:500})
-      }
-
+      try{setting=await prisma.watchSetting.upsert({where:{userId:c.user.id},create:{userId:c.user.id},update:{}})}
+      catch(e){console.error("Watch Together setting error",e);return NextResponse.json({error:"Could not access Watch Together settings."},{status:500})}
       const mins=[2,5,10,15].includes(setting.expiryMinutes)?setting.expiryMinutes:10
       try{
-        const room=await prisma.watchRoom.create({
-          data:{
-            homeId:c.membership.home.id,
-            videoId,
-            position:Number(b.position)||0,
-            playing:Boolean(b.playing),
-            volume:Math.max(0,Math.min(100,Number(b.volume) || 100)),
-            playbackRate:Math.max(.25,Math.min(2,Number(b.playbackRate)||1))
-          }
-        })
+        const room=await prisma.watchRoom.create({data:{homeId:c.membership.home.id,videoId,position:num(b.position,0),playing:Boolean(b.playing),volume:Math.max(0,Math.min(100,num(b.volume,100))),playbackRate:Math.max(.25,Math.min(2,num(b.playbackRate,1)))}})
         await prisma.watchRoomMember.create({data:{roomId:room.id,userId:c.user.id}})
-        const invite=await prisma.watchInvite.create({
-          data:{
-            homeId:room.homeId,
-            roomId:room.id,
-            senderId:c.user.id,
-            recipientId:other.userId,
-            videoId:room.videoId,
-            position:room.position,
-            expiresAt:new Date(now.getTime()+mins*60000)
-          }
-        })
+        const invite=await prisma.watchInvite.create({data:{homeId:room.homeId,roomId:room.id,senderId:c.user.id,recipientId:other.userId,videoId:room.videoId,position:room.position,expiresAt:new Date(now.getTime()+mins*60000)}})
         return NextResponse.json({inviteId:invite.id,roomId:room.id})
-      }catch(e){
-        console.error("Watch Together invite creation error",e)
-        return NextResponse.json({error:"Satella could not create the Watch Together invitation. Please try again."},{status:500})
-      }
+      }catch(e){console.error("Watch Together invite creation error",e);return NextResponse.json({error:"Satella could not create the Watch Together invitation. Please try again."},{status:500})}
     }
-
     if(b.action==="respond"){
       const i=await prisma.watchInvite.findFirst({where:{id:String(b.inviteId),recipientId:c.user.id}})
       if(!i)return NextResponse.json({error:"Invitation not found."},{status:404})
       if(i.status==="PENDING"&&i.expiresAt<=now)return NextResponse.json({error:"Invitation expired."},{status:410})
-      if(b.response==="decline"){
-        await prisma.watchInvite.update({where:{id:i.id},data:{status:"DECLINED",respondedAt:now}})
-        return NextResponse.json({status:"DECLINED"})
-      }
+      if(b.response==="decline"){await prisma.watchInvite.update({where:{id:i.id},data:{status:"DECLINED",respondedAt:now}});return NextResponse.json({status:"DECLINED"})}
       if(b.response==="reply"){
-        await prisma.watchInvite.update({where:{id:i.id},data:{customMessage:String(b.message||"").slice(0,500)}})
+        const message=String(b.message||"").trim().slice(0,500)
+        if(!message)return NextResponse.json({error:"Write a message first."},{status:400})
+        await prisma.watchInvite.update({where:{id:i.id},data:{customMessage:message}})
         return NextResponse.json({status:"PENDING"})
       }
       if(b.response==="accept"){
@@ -96,14 +66,12 @@ export async function POST(req:Request){
       }
       return NextResponse.json({error:"Invalid invitation response."},{status:400})
     }
-
     if(b.action==="sync"){
       const room=await prisma.watchRoom.findFirst({where:{id:String(b.roomId),homeId:c.membership.home.id},include:{members:true}})
       if(!room||!room.members.some(m=>m.userId===c.user.id))return NextResponse.json({error:"You are not a member of this Watch Together room."},{status:403})
-      const u=await prisma.watchRoom.update({where:{id:room.id},data:{videoId:String(b.videoId||room.videoId),position:Math.max(0,Number(b.position)||0),playing:Boolean(b.playing),volume:Math.max(0,Math.min(100,Number(b.volume)||0)),playbackRate:Math.max(.25,Math.min(2,Number(b.playbackRate)||1)),version:{increment:1},lastActionAt:now}})
+      const u=await prisma.watchRoom.update({where:{id:room.id},data:{videoId:String(b.videoId||room.videoId),position:Math.max(0,num(b.position,room.position)),playing:Boolean(b.playing),volume:Math.max(0,Math.min(100,num(b.volume,room.volume))),playbackRate:Math.max(.25,Math.min(2,num(b.playbackRate,room.playbackRate))),version:{increment:1},lastActionAt:now}})
       return NextResponse.json({version:u.version})
     }
-
     if(b.action==="leave"){
       const room=await prisma.watchRoom.findFirst({where:{id:String(b.roomId),homeId:c.membership.home.id},include:{members:true}})
       const me=room?.members.find(m=>m.userId===c.user.id)
@@ -111,7 +79,6 @@ export async function POST(req:Request){
       await prisma.watchRoomMember.update({where:{id:me.id},data:{leftAt:now}})
       return NextResponse.json({ok:true,rejoinUntil:new Date(now.getTime()+180000).toISOString()})
     }
-
     if(b.action==="rejoin"){
       const room=await prisma.watchRoom.findFirst({where:{id:String(b.roomId),homeId:c.membership.home.id},include:{members:true}})
       const me=room?.members.find(m=>m.userId===c.user.id)
@@ -119,10 +86,6 @@ export async function POST(req:Request){
       await prisma.watchRoomMember.update({where:{id:me.id},data:{leftAt:null,lastSeenAt:now}})
       return NextResponse.json({ok:true})
     }
-
     return NextResponse.json({error:"Invalid Watch Together action."},{status:400})
-  }catch(e){
-    console.error("Watch Together API error",e)
-    return NextResponse.json({error:"Watch Together encountered a server error. Please try again."},{status:500})
-  }
+  }catch(e){console.error("Watch Together API error",e);return NextResponse.json({error:"Watch Together encountered a server error. Please try again."},{status:500})}
 }
