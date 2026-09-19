@@ -1,9 +1,12 @@
 import RoomGrid from "@/components/home/RoomGrid"
+import QuickNotePin from "@/components/home/QuickNotePin"
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { getUserHome } from "@/lib/home"
+
+export const dynamic = "force-dynamic"
 
 export default async function HomePage() {
   const session = await getServerSession(authOptions)
@@ -15,8 +18,24 @@ export default async function HomePage() {
   const home = await getUserHome(user.id)
   if (!home) redirect("/park")
 
+  const quickNote = await prisma.quickNote.findFirst({
+    where: { homeId: home.id, recipientId: user.id },
+    orderBy: { createdAt: "desc" },
+  })
+
+  const initialQuickNote = quickNote
+    ? {
+        id: quickNote.id,
+        content: quickNote.content,
+        readCount: quickNote.readCount,
+        remainingReads: Math.max(0, 3 - quickNote.readCount),
+        createdAt: quickNote.createdAt.toISOString(),
+      }
+    : null
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-zinc-950 via-fuchsia-950/40 to-violet-950/50 px-4 pb-12 pt-8 text-white">
+    <main className="relative min-h-screen bg-gradient-to-br from-zinc-950 via-fuchsia-950/40 to-violet-950/50 px-4 pb-12 pt-8 text-white">
+      <QuickNotePin initialNote={initialQuickNote} />
       <div className="mx-auto w-full max-w-5xl">
         <section className="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">

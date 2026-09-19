@@ -11,62 +11,60 @@ body {
 }
 
 @keyframes gradientMove {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
-
 
 .animate-gradient {
   animation: gradientMove 5s ease infinite;
 }
 
 .gradient-input {
-  background-image: linear-gradient(
-    90deg,
-    #ff4d4d,
-    #ff66cc,
-    #ffa64d,
-    #ffff66,
-    #cc66ff,
-    #ff4d4d
-  );
-
+  background-image: linear-gradient(90deg, #ff4d4d, #ff66cc, #ffa64d, #ffff66, #cc66ff, #ff4d4d);
   background-size: 300% 100%;
-
   animation: gradientMove 5s ease infinite;
-
   -webkit-background-clip: text;
   background-clip: text;
-
   -webkit-text-fill-color: transparent;
 }
 
 .gradient-text-input {
   color: transparent;
-  background-image: linear-gradient(
-    90deg,
-    #ff4d4d,
-    #ff66cc,
-    #ffa64d,
-    #ffff66,
-    #cc66ff,
-    #ff4d4d
-  );
-
+  background-image: linear-gradient(90deg, #ff4d4d, #ff66cc, #ffa64d, #ffff66, #cc66ff, #ff4d4d);
   background-size: 300% 100%;
   animation: gradientMove 5s ease infinite;
-
   background-clip: text;
   -webkit-background-clip: text;
-
   -webkit-text-fill-color: transparent;
+}
+
+.checkbox-notes > div[data-note-item="true"] {
+  position: relative;
+  padding-left: 2rem;
+  min-height: 1.75rem;
+}
+
+.checkbox-notes > div[data-note-item="true"]::before {
+  content: "☐";
+  position: absolute;
+  left: 0;
+  top: 0;
+  cursor: pointer;
+  font-size: 1.15rem;
+}
+
+.checkbox-notes > div[data-note-item="true"][data-checked="true"] {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.checkbox-notes > div[data-note-item="true"][data-checked="true"]::before {
+  content: "☑";
+}
+
+[data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: rgb(255 255 255 / 0.28);
+  pointer-events: none;
 }

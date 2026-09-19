@@ -1,13 +1,28 @@
+import { getServerSession } from "next-auth"
 import PageHeader from "@/components/common/PageHeader"
+import NotesClientPage from "@/components/notes/NotesClientPage"
+import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
 
-export default function OtherNotesPage() {
+export const dynamic = "force-dynamic"
+
+export default async function OtherNotesPage() {
+  const session = await getServerSession(authOptions)
+  const user = session?.user?.email ? await prisma.user.findUnique({ where: { email: session.user.email } }) : null
+  const membership = user
+    ? await prisma.homeMember.findUnique({
+        where: { userId: user.id },
+        include: { home: { include: { members: { include: { user: true } } } } },
+      })
+    : null
+  const other = membership?.home.members.find((member) => member.userId !== user?.id)
+  const nickname = other?.user.nickname || other?.nickname || other?.user.name || "Other user's"
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-950 via-black to-pink-950 p-6">
-      <div className="mx-auto max-w-md">
-        <PageHeader title="📒 Other User's Notes" backHref="/notes" />
-        <div className="mt-6 rounded-3xl bg-white/10 p-6">
-          <p className="text-white/60">The other user's notes will appear here.</p>
-        </div>
+    <main className="min-h-screen bg-gradient-to-br from-purple-950 via-black to-pink-950 p-6 text-white">
+      <div className="mx-auto max-w-2xl">
+        <PageHeader title={`📒 ${nickname} Notes`} backHref="/notes" />
+        <NotesClientPage mode="other" title={`${nickname}'s Notes`} />
       </div>
     </main>
   )
