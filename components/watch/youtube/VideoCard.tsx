@@ -103,6 +103,8 @@ export default function VideoCard({
 
 
 
+      <button onClick={() => router.push(`/watch/youtube/player?id=${video.id}&title=${encodeURIComponent(video.title)}&channel=${encodeURIComponent(video.channel)}`)} className="w-full border-t border-white/10 py-3 text-white hover:bg-white/10">👥 Watch Together</button>
+
       <button
 
         onClick={addVideo}
