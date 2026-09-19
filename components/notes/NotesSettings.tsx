@@ -12,6 +12,7 @@ type Props = {
 
 export default function NotesSettings({ mode, checkboxMode, isPrivate, onChange }: Props) {
   const [open, setOpen] = useState(false)
+  const currentBackgroundImage = backgroundImage
 
   return (
     <div className="relative">
