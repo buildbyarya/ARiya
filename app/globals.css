@@ -68,3 +68,12 @@ body {
   color: rgb(255 255 255 / 0.28);
   pointer-events: none;
 }
+
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-12deg); }
+  40% { transform: rotate(10deg); }
+  60% { transform: rotate(-8deg); }
+  80% { transform: rotate(6deg); }
+}

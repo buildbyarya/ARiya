@@ -1,4 +1,5 @@
 import Link from "next/link"
+import OtherNotesButton from "@/components/notes/OtherNotesButton"
 import { getServerSession } from "next-auth"
 import PageHeader from "@/components/common/PageHeader"
 import { authOptions } from "@/lib/auth"
@@ -44,13 +45,7 @@ export default async function NotesPage() {
             <span className="mt-1 block text-sm text-white/45">Your notebook · you can edit it</span>
           </Link>
 
-          <Link href="/notes/other" className="relative rounded-2xl border border-white/10 bg-white/[0.07] p-5 text-left shadow-lg backdrop-blur-xl transition hover:bg-white/[0.12] active:scale-[0.99]">
-            <span className="block text-lg font-semibold">📒 {otherNickname} Notes</span>
-            <span className="mt-1 block text-sm text-white/45">Read only for you</span>
-            {otherNotebook?.isPrivate ? (
-              <span className="absolute bottom-3 right-4 text-lg" aria-label="Private">🔒</span>
-            ) : null}
-          </Link>
+          <OtherNotesButton href="/notes/other" nickname={otherNickname} isPrivate={Boolean(otherNotebook?.isPrivate)} />
 
           <Link href="/notes/shared" className="rounded-2xl border border-white/10 bg-white/[0.07] p-5 text-left shadow-lg backdrop-blur-xl transition hover:bg-white/[0.12] active:scale-[0.99]">
             <span className="block text-lg font-semibold">🤝 Shared Notes</span>
