@@ -9,14 +9,16 @@ type VideoMeta = {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const ids = Array.isArray(body?.videoIds)
-      ? body.videoIds.map((id: unknown) => String(id || "").trim()).filter(Boolean)
+    const ids: string[] = Array.isArray(body?.videoIds)
+      ? body.videoIds
+          .map((id: unknown) => String(id || "").trim())
+          .filter((id: string) => Boolean(id))
       : []
 
-    const uniqueIds = [...new Set(ids)].slice(0, 100)
+    const uniqueIds: string[] = [...new Set<string>(ids)].slice(0, 100)
 
     const entries = await Promise.all(
-      uniqueIds.map(async videoId => {
+      uniqueIds.map(async (videoId: string) => {
         try {
           const response = await fetch(
             `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}&format=json`,
