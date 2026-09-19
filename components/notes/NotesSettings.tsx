@@ -6,7 +6,8 @@ type Props = {
   mode: "personal" | "shared"
   checkboxMode: boolean
   isPrivate: boolean
-  onChange: (next: { checkboxMode?: boolean; isPrivate?: boolean }) => Promise<void>
+  backgroundImage?: string | null
+  onChange: (next: { checkboxMode?: boolean; isPrivate?: boolean; backgroundImage?: string | null }) => Promise<void>
 }
 
 export default function NotesSettings({ mode, checkboxMode, isPrivate, onChange }: Props) {
@@ -52,6 +53,7 @@ export default function NotesSettings({ mode, checkboxMode, isPrivate, onChange 
             </button>
           ) : null}
 
+          <label className="mt-2 block rounded-xl bg-white/5 p-3 text-sm"><span className="block font-medium">🖼️ Background image</span><input type="file" accept="image/*" className="mt-2 w-full text-xs" onChange={e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>5*1024*1024){alert("Choose an image under 5 MB.");return}const r=new FileReader();r.onload=()=>void onChange({backgroundImage:String(r.result||"")});r.readAsDataURL(f)}}/></label>{backgroundImage ? <button onClick={()=>onChange({backgroundImage:null})} className="mt-2 w-full rounded-xl bg-white/5 p-3 text-sm">Remove background</button> : null}
           <p className="mt-3 text-xs leading-5 text-white/35">
             Rich text tools are available from Aa while editing.
           </p>
