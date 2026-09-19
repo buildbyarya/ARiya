@@ -14,3 +14,4 @@ ALTER TABLE "WatchInvite" ADD CONSTRAINT "WatchInvite_homeId_fkey" FOREIGN KEY (
 ALTER TABLE "WatchInvite" ADD CONSTRAINT "WatchInvite_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "WatchRoom"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "WatchInvite" ADD CONSTRAINT "WatchInvite_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "WatchInvite" ADD CONSTRAINT "WatchInvite_recipientId_fkey" FOREIGN KEY ("recipientId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+CREATE TABLE "WatchSetting" ("id" TEXT NOT NULL,"userId" TEXT NOT NULL,"expiryMinutes" INTEGER NOT NULL DEFAULT 10,CONSTRAINT "WatchSetting_pkey" PRIMARY KEY ("id")); CREATE UNIQUE INDEX "WatchSetting_userId_key" ON "WatchSetting"("userId"); ALTER TABLE "WatchSetting" ADD CONSTRAINT "WatchSetting_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
