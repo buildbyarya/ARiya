@@ -11,7 +11,7 @@ function Page(){
  const lastObserved=useRef(0);const lastVolume=useRef(-1);const lastRate=useRef(1);const previousOther=useRef<boolean|null>(null)
 
  async function sync(force=false){
-  if(!player.current||!playerReady||suppress.current)return
+  if(!player.current||suppress.current)return
   const id=player.current.getVideoData?.().video_id;if(!id)return
   const position=Number(player.current.getCurrentTime?.()||0);const playing=player.current.getPlayerState?.()===1
   const volume=Number(player.current.getVolume?.()??100);const playbackRate=Number(player.current.getPlaybackRate?.()||1)
