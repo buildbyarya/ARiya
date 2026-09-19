@@ -11,6 +11,7 @@ type Props = {
   initialCheckboxMode: boolean
   canEdit: boolean
   locked: boolean
+  backgroundImage?: string | null
   onSaved?: (content: string) => void
 }
 
@@ -41,6 +42,7 @@ export default function NotesEditor({
   initialCheckboxMode,
   canEdit,
   locked,
+  backgroundImage,
   onSaved,
 }: Props) {
   const editorRef = useRef<HTMLDivElement>(null)
@@ -187,6 +189,7 @@ export default function NotesEditor({
         suppressContentEditableWarning
         onInput={handleInput}
         onClick={toggleCheck}
+        style={backgroundImage ? { backgroundImage: `linear-gradient(rgba(0,0,0,.18),rgba(0,0,0,.18)),url(${backgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         className={`checkbox-notes min-h-[55vh] px-5 py-6 text-[16px] leading-7 outline-none ${canEdit ? "cursor-text" : "cursor-default"}`}
         data-placeholder="Start writing…"
       />
