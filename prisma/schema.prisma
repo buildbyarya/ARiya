@@ -172,7 +172,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-
 model WatchRoom {
   id String @id @default(cuid())
   homeId String
@@ -200,6 +199,7 @@ model WatchRoomMember {
   room WatchRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@unique([roomId, userId])
+  @@index([userId])
 }
 
 model WatchInvite {
