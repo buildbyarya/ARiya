@@ -67,6 +67,7 @@ export async function GET(request: Request) {
       content: notebook.content,
       checkboxMode: notebook.checkboxMode,
       isPrivate: notebook.isPrivate,
+      backgroundImage: notebook.backgroundImage,
       canEdit: true,
       locked: false,
     })
@@ -79,6 +80,7 @@ export async function GET(request: Request) {
       content: notebook.content,
       checkboxMode: notebook.checkboxMode,
       isPrivate: false,
+      backgroundImage: notebook.backgroundImage,
       canEdit: true,
       locked: false,
     })
@@ -103,6 +105,7 @@ export async function GET(request: Request) {
       content: notebook.isPrivate ? "" : notebook.content,
       checkboxMode: notebook.checkboxMode,
       isPrivate: notebook.isPrivate,
+      backgroundImage: notebook.isPrivate ? null : notebook.backgroundImage,
       canEdit: false,
       locked: notebook.isPrivate,
     })
@@ -126,10 +129,11 @@ export async function PATCH(request: Request) {
     ? await getOrCreateShared(membership.home.id, user.id)
     : await getOrCreatePersonal(membership.home.id, user.id)
 
-  const data: { content?: string; checkboxMode?: boolean; isPrivate?: boolean } = {}
+  const data: { content?: string; checkboxMode?: boolean; isPrivate?: boolean; backgroundImage?: string | null } = {}
   if (typeof body.content === "string") data.content = cleanHtml(body.content)
   if (typeof body.checkboxMode === "boolean") data.checkboxMode = body.checkboxMode
   if (type === "personal" && typeof body.isPrivate === "boolean") data.isPrivate = body.isPrivate
+  if (typeof body.backgroundImage === "string" || body.backgroundImage === null) data.backgroundImage = body.backgroundImage
   if (type === "shared") data.isPrivate = false
 
   const updated = await prisma.noteBook.update({ where: { id: notebook.id }, data })

@@ -31,6 +31,10 @@ model User {
   noteBooks NoteBook[]
   sentQuickNotes QuickNote[] @relation("QuickNoteSender")
   receivedQuickNotes QuickNote[] @relation("QuickNoteRecipient")
+  watchInvitesSent WatchInvite[] @relation("WatchInviteSender")
+  watchInvitesReceived WatchInvite[] @relation("WatchInviteRecipient")
+  watchMemberships WatchRoomMember[]
+  watchSetting WatchSetting?
 }
 
 model Home {
@@ -44,6 +48,8 @@ model Home {
   library LibraryVideo[]
   noteBooks NoteBook[]
   quickNotes QuickNote[]
+  watchRooms WatchRoom[]
+  watchInvites WatchInvite[]
 }
 
 model PendingHome {
@@ -101,6 +107,7 @@ model NoteBook {
   content String @default("")
   checkboxMode Boolean @default(false)
   isPrivate Boolean @default(false)
+  backgroundImage String?
   updatedAt DateTime @updatedAt
 
   home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
@@ -163,4 +170,62 @@ model VerificationToken {
   expires DateTime
 
   @@unique([identifier, token])
+}
+
+model WatchRoom {
+  id String @id @default(cuid())
+  homeId String
+  videoId String
+  position Float @default(0)
+  playing Boolean @default(false)
+  volume Int @default(100)
+  playbackRate Float @default(1)
+  version Int @default(0)
+  lastActionAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  members WatchRoomMember[]
+  invites WatchInvite[]
+  @@index([homeId])
+}
+
+model WatchRoomMember {
+  id String @id @default(cuid())
+  roomId String
+  userId String
+  joinedAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  leftAt DateTime?
+  room WatchRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([roomId, userId])
+  @@index([userId])
+}
+
+model WatchInvite {
+  id String @id @default(cuid())
+  homeId String
+  roomId String
+  senderId String
+  recipientId String
+  videoId String
+  position Float @default(0)
+  expiresAt DateTime
+  status String @default("PENDING")
+  customMessage String?
+  createdAt DateTime @default(now())
+  respondedAt DateTime?
+  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  room WatchRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender User @relation("WatchInviteSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("WatchInviteRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  @@index([recipientId, status])
+  @@index([expiresAt])
+}
+
+model WatchSetting {
+  id String @id @default(cuid())
+  userId String @unique
+  expiryMinutes Int @default(10)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

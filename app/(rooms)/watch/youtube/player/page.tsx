@@ -1,97 +1,12 @@
 "use client"
-
-import { Suspense, useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import {Suspense,useEffect,useRef,useState} from "react"
+import {useSearchParams} from "next/navigation"
 import PageHeader from "@/components/common/PageHeader"
-
-function PlayerContent() {
-  const searchParams = useSearchParams()
-  const videoId = searchParams.get("id")
-  const title = searchParams.get("title") || "YouTube Video"
-  const channel = searchParams.get("channel") || ""
-
-  const [saved, setSaved] = useState({ liked: false, watch_later: false })
-
-  useEffect(() => {
-    fetch("/api/youtube/library", { cache: "no-store" })
-      .then(response => response.json())
-      .then((items) => {
-        if (!Array.isArray(items)) return
-        setSaved({
-          liked: items.some((item) => item.videoId === videoId && item.type === "liked"),
-          watch_later: items.some((item) => item.videoId === videoId && item.type === "watch_later"),
-        })
-      })
-  }, [videoId])
-
-  async function toggle(type: "liked" | "watch_later") {
-    if (!videoId) return
-
-    const isSaved = saved[type]
-    const response = await fetch("/api/youtube/library", {
-      method: isSaved ? "DELETE" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ videoId, type }),
-    })
-
-    if (!response.ok) {
-      alert("Couldn't update your library right now.")
-      return
-    }
-
-    setSaved(current => ({ ...current, [type]: !isSaved }))
-  }
-
-  return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-950 via-black to-pink-950 p-6">
-      <div className="mx-auto max-w-md">
-        <PageHeader title="▶ Player" />
-
-        {videoId ? (
-          <iframe
-            className="w-full aspect-video rounded-3xl"
-            src={`https://www.youtube.com/embed/${videoId}`}
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-          />
-        ) : (
-          <p>No video selected.</p>
-        )}
-
-        <h2 className="mt-5 text-xl font-bold">{title}</h2>
-        {channel ? <p className="text-white/60 mt-2">{channel}</p> : null}
-
-        <div className="mt-6 grid grid-cols-3 gap-3">
-          <button
-            onClick={() => toggle("liked")}
-            className="rounded-2xl bg-white/10 py-4 text-xl"
-          >
-            {saved.liked ? "❤️" : "🤍"}
-          </button>
-
-          <button
-            onClick={() => toggle("watch_later")}
-            className="rounded-2xl bg-white/10 py-4 text-xl"
-          >
-            {saved.watch_later ? "⏰" : "🕒"}
-          </button>
-
-          <button
-            onClick={() => alert("👥 Watch Together will be added in the next YouTube batch.")}
-            className="rounded-2xl bg-white/10 py-4 text-xl"
-          >
-            👥
-          </button>
-        </div>
-      </div>
-    </main>
-  )
-}
-
-export default function PlayerPage() {
-  return (
-    <Suspense fallback={<main className="min-h-screen flex items-center justify-center"><p>Loading...</p></main>}>
-      <PlayerContent />
-    </Suspense>
-  )
-}
+declare global{interface Window{YT:any;onYouTubeIframeAPIReady?:()=>void}}
+function Page(){const p=useSearchParams();const videoId=p.get("id");const title=p.get("title")||"YouTube Video";const channel=p.get("channel")||"";const [saved,setSaved]=useState({liked:false,watch_later:false});const player=useRef<any>()
+useEffect(()=>{fetch("/api/youtube/library",{cache:"no-store"}).then(r=>r.json()).then(a=>Array.isArray(a)&&setSaved({liked:a.some((x:any)=>x.videoId===videoId&&x.type==="liked"),watch_later:a.some((x:any)=>x.videoId===videoId&&x.type==="watch_later")}))},[videoId])
+useEffect(()=>{if(!videoId)return;const make=()=>{if(window.YT?.Player)player.current=new window.YT.Player("solo-player",{videoId,playerVars:{playsinline:1,enablejsapi:1}})};if(window.YT?.Player)make();else{window.onYouTubeIframeAPIReady=make;const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";document.body.appendChild(s)}return()=>player.current?.destroy?.()},[videoId])
+async function toggle(type:"liked"|"watch_later"){const is=saved[type];const r=await fetch("/api/youtube/library",{method:is?"DELETE":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({videoId,type})});if(r.ok)setSaved(x=>({...x,[type]:!is}))}
+async function invite(){if(!videoId||!player.current)return;const r=await fetch("/api/youtube/watch-together",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"create-invite",videoId,position:player.current.getCurrentTime?.()||0,playing:player.current.getPlayerState?.()===1,volume:player.current.getVolume?.()||100,playbackRate:player.current.getPlaybackRate?.()||1})});if(r.ok)alert("Watch Together invitation sent ❤️")}
+return <main className="min-h-screen bg-gradient-to-br from-purple-950 via-black to-pink-950 p-4 text-white"><div className="mx-auto max-w-2xl"><PageHeader title="▶ Player" backHref="/watch/youtube"/>{videoId?<div id="solo-player" className="mt-4 aspect-video w-full overflow-hidden rounded-3xl bg-black"/>:<p>No video selected.</p>}<h2 className="mt-5 text-xl font-bold">{title}</h2>{channel&&<p className="mt-2 text-white/60">{channel}</p>}<div className="mt-5 grid grid-cols-3 gap-3"><button onClick={()=>void toggle("liked")} className="rounded-2xl bg-white/10 py-4 text-xl">{saved.liked?"❤️":"🤍"}</button><button onClick={()=>void toggle("watch_later")} className="rounded-2xl bg-white/10 py-4 text-xl">{saved.watch_later?"⏰":"🕒"}</button><button onClick={()=>void invite()} className="rounded-2xl bg-white/10 py-4 text-xl">👥</button></div><p className="mt-2 text-center text-xs text-white/40">Watch Together</p></div></main>}
+export default function PlayerPage(){return <Suspense fallback={<main className="min-h-screen flex items-center justify-center">Loading…</main>}><Page/></Suspense>}

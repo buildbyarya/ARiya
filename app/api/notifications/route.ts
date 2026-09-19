@@ -1,0 +1,5 @@
+import {getServerSession} from "next-auth"
+import {NextResponse} from "next/server"
+import {authOptions} from "@/lib/auth"
+import {prisma} from "@/lib/prisma"
+export async function GET(){const s=await getServerSession(authOptions);if(!s?.user?.email)return NextResponse.json({notifications:[]},{status:401});const u=await prisma.user.findUnique({where:{email:s.user.email}});if(!u)return NextResponse.json({notifications:[]},{status:401});const a=await prisma.watchInvite.findMany({where:{recipientId:u.id,status:"PENDING",expiresAt:{gt:new Date()}},include:{sender:true},orderBy:{createdAt:"desc"}});return NextResponse.json({notifications:a.map(i=>({id:i.id,text:(i.sender.nickname||i.sender.name||"Someone")+" invited you to watch YouTube",customMessage:i.customMessage,expiresAt:i.expiresAt.toISOString()}))})}
