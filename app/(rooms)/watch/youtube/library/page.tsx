@@ -31,18 +31,21 @@ export default function LibraryPage() {
 
         <div className="mt-8 space-y-4">
           <Link href="/watch/youtube/library/liked" className="block rounded-3xl bg-white/10 p-5 transition hover:bg-white/20 active:scale-95">
-            <h2 className="text-xl font-bold">❤️ Liked Videos</h2>
-            <p className="mt-2 text-white/60">{loading ? "Loading..." : `${liked.length} videos`}</p>
+            <div className="text-3xl">❤️</div>
+            <p className="mt-2 text-sm text-white/70">Liked Videos</p>
+            <p className="mt-1 text-white/50">{loading ? "Loading..." : `${liked.length} videos`}</p>
           </Link>
 
           <Link href="/watch/youtube/library/watch-later" className="block rounded-3xl bg-white/10 p-5 transition hover:bg-white/20 active:scale-95">
-            <h2 className="text-xl font-bold">⏰ Watch Later</h2>
-            <p className="mt-2 text-white/60">{loading ? "Loading..." : `${watchLater.length} videos`}</p>
+            <div className="text-3xl">🕒</div>
+            <p className="mt-2 text-sm text-white/70">Watch Later</p>
+            <p className="mt-1 text-white/50">{loading ? "Loading..." : `${watchLater.length} videos`}</p>
           </Link>
 
           <Link href="/watch/youtube/library/playlists" className="block rounded-3xl bg-white/10 p-5 transition hover:bg-white/20 active:scale-95">
-            <h2 className="text-xl font-bold">📂 Playlists</h2>
-            <p className="mt-2 text-white/60">Playlists will be added next.</p>
+            <div className="text-3xl">📂</div>
+            <p className="mt-2 text-sm text-white/70">Playlists</p>
+            <p className="mt-1 text-white/50">Open your playlists</p>
           </Link>
         </div>
       </div>
