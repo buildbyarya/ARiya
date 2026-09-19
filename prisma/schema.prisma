@@ -34,6 +34,7 @@ model User {
   watchInvitesSent WatchInvite[] @relation("WatchInviteSender")
   watchInvitesReceived WatchInvite[] @relation("WatchInviteRecipient")
   watchMemberships WatchRoomMember[]
+  watchSetting WatchSetting?
 }
 
 model Home {
@@ -221,3 +222,5 @@ model WatchInvite {
   @@index([recipientId, status])
   @@index([expiresAt])
 }
+
+model WatchSetting { id String @id @default(cuid()); userId String @unique; expiryMinutes Int @default(10); user User @relation(fields:[userId],references:[id],onDelete:Cascade) }
