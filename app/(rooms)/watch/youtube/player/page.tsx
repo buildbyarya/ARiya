@@ -3,7 +3,7 @@ import {Suspense,useEffect,useRef,useState} from "react"
 import {useSearchParams} from "next/navigation"
 import PageHeader from "@/components/common/PageHeader"
 declare global{interface Window{YT:any;onYouTubeIframeAPIReady?:()=>void}}
-function Page(){const p=useSearchParams();const videoId=p.get("id");const title=p.get("title")||"YouTube Video";const channel=p.get("channel")||"";const [saved,setSaved]=useState({liked:false,watch_later:false});const player=useRef<any>()
+function Page(){const p=useSearchParams();const videoId=p.get("id");const title=p.get("title")||"YouTube Video";const channel=p.get("channel")||"";const [saved,setSaved]=useState({liked:false,watch_later:false});const player=useRef<any>(null)
 useEffect(()=>{fetch("/api/youtube/library",{cache:"no-store"}).then(r=>r.json()).then(a=>Array.isArray(a)&&setSaved({liked:a.some((x:any)=>x.videoId===videoId&&x.type==="liked"),watch_later:a.some((x:any)=>x.videoId===videoId&&x.type==="watch_later")}))},[videoId])
 useEffect(()=>{if(!videoId)return;const make=()=>{if(window.YT?.Player)player.current=new window.YT.Player("solo-player",{videoId,playerVars:{playsinline:1,enablejsapi:1}})};if(window.YT?.Player)make();else{window.onYouTubeIframeAPIReady=make;const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";document.body.appendChild(s)}return()=>player.current?.destroy?.()},[videoId])
 async function toggle(type:"liked"|"watch_later"){const is=saved[type];const r=await fetch("/api/youtube/library",{method:is?"DELETE":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({videoId,type})});if(r.ok)setSaved(x=>({...x,[type]:!is}))}
