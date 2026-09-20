@@ -75,8 +75,7 @@ function Page(){
    if(!playerReady||!player.current||!initialized.current||suppress.current)return
    const incoming=Number(d.room.version??-1);const local=Number(player.current.getCurrentTime?.()||0);const current=player.current.getVideoData?.().video_id||""
    const drift=Math.abs(Number(d.room.position)-local);const videoChanged=current!==d.room.videoId;const playChanged=(player.current.getPlayerState?.()===1)!==Boolean(d.room.playing);const rateChanged=Math.abs(Number(player.current.getPlaybackRate?.()||1)-Number(d.room.playbackRate||1))>.01
-   const remoteJump=lastRemotePosition.current!==null&&Math.abs(Number(d.room.position)-lastRemotePosition.current)>1.25
-   if(incoming!==version.current){version.current=incoming;if(videoChanged||playChanged||rateChanged||(d.room.playing&&drift>=.8)||(!d.room.playing&&drift>=.35))applyRemote(d.room)}
+      if(incoming!==version.current){version.current=incoming;if(videoChanged||playChanged||rateChanged||(d.room.playing&&drift>=.8)||(!d.room.playing&&drift>=.35))applyRemote(d.room)}
    else if(d.room.playing&&drift>=1.2)applyRemote(d.room)
    lastRemotePosition.current=Number(d.room.position);lastRemotePlaying.current=Boolean(d.room.playing)
   }
