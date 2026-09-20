@@ -1,0 +1,22 @@
+"use client"
+import {useEffect,useRef,useState} from "react"
+import PageHeader from "@/components/common/PageHeader"
+type G={id:string;status:string;startedAt:string|null;phaseEndsAt:string|null;drawingA:string|null;drawingB:string|null;round:number;durationSec:number;swapSec:number}
+export default function DrawingSwapPage(){
+ const [game,setGame]=useState<G|null>(null);const [side,setSide]=useState("A");const [left,setLeft]=useState(0);const [saving,setSaving]=useState(false);const canvas=useRef<HTMLCanvasElement>(null);const drawing=useRef(false);const last=useRef<{x:number;y:number}|null>(null)
+ async function load(){const r=await fetch("/api/games/drawing-swap",{cache:"no-store"});if(r.ok){const d=await r.json();setGame(d.game);setSide(d.side)}}
+ useEffect(()=>{void load();const t=setInterval(()=>void load(),1000);return()=>clearInterval(t)},[])
+ useEffect(()=>{if(game?.phaseEndsAt){const t=setInterval(()=>setLeft(Math.max(0,Math.ceil((new Date(game.phaseEndsAt!).getTime()-Date.now())/1000))),250);return()=>clearInterval(t)}},[game?.phaseEndsAt])
+ useEffect(()=>{const c=canvas.current;if(!c||!game)return;const ctx=c.getContext("2d")!;ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);const source=side==="A"?game.drawingB:game.drawingA;if(source&&game.status==="RUNNING"){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0);img.src=source}},[game?.round,game?.status,side])
+ function pos(e:PointerEvent){const c=canvas.current!;const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}}
+ function down(e:React.PointerEvent){if(game?.status!=="RUNNING")return;canvas.current?.setPointerCapture(e.pointerId);drawing.current=true;last.current=pos(e.nativeEvent)}
+ function move(e:React.PointerEvent){if(!drawing.current)return;const p=pos(e.nativeEvent),ctx=canvas.current!.getContext("2d")!;ctx.strokeStyle="#111";ctx.lineWidth=4;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(last.current!.x,last.current!.y);ctx.lineTo(p.x,p.y);ctx.stroke();last.current=p}
+ async function up(){if(!drawing.current)return;drawing.current=false;setSaving(true);await fetch("/api/games/drawing-swap",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"save",side,data:canvas.current?.toDataURL("image/png")})});setSaving(false)}
+ async function start(){await fetch("/api/games/drawing-swap",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"start"})});void load()}
+ async function reset(){await fetch("/api/games/drawing-swap",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"reset"})});void load()}
+ return <main className="min-h-screen bg-gradient-to-br from-purple-950 via-black to-pink-950 p-4 text-white"><div className="mx-auto max-w-2xl"><PageHeader title="🎨 Drawing Swap" backHref="/games"/><div className="mt-4 rounded-3xl border border-white/10 bg-white/5 p-4">
+ {game?.status==="LOBBY"&&<div className="py-12 text-center"><div className="text-5xl">🎨</div><h2 className="mt-3 text-2xl font-bold">Ready?</h2><p className="mt-2 text-white/50">Both players draw. Every 45 seconds, your drawing swaps.</p><button onClick={()=>void start()} className="mt-6 rounded-2xl bg-pink-500/30 px-6 py-3 font-semibold">Start game</button></div>}
+ {game?.status==="RUNNING"&&<><div className="flex items-center justify-between"><div><div className="font-semibold">Round {game.round+1}</div><div className="text-sm text-white/45">You are player {side}</div></div><div className="text-2xl font-black">{left}s</div></div><canvas ref={canvas} width={800} height={600} onPointerDown={down} onPointerMove={move} onPointerUp={()=>void up()} onPointerCancel={()=>void up()} className="mt-4 w-full touch-none rounded-2xl bg-white shadow-xl"/><div className="mt-3 text-center text-xs text-white/40">{saving?"Saving…":"Draw on your partner's current canvas. It swaps every 45 seconds."}</div></>}
+ {game?.status==="REVEAL"&&<div className="space-y-4"><h2 className="text-center text-2xl font-bold">✨ Final Reveal</h2><div className="grid gap-4 sm:grid-cols-2">{[game.drawingA,game.drawingB].map((d,i)=>d?<img key={i} src={d} alt={"Final drawing "+(i+1)} className="w-full rounded-2xl bg-white"/>:<div key={i} className="rounded-2xl bg-white/10 p-12 text-center">No drawing saved</div>)}</div><button onClick={()=>void reset()} className="w-full rounded-2xl bg-white/10 py-3">Play again</button></div>}
+ </div></div></main>
+}

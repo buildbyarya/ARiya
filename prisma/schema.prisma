@@ -30,6 +30,8 @@ model User {
   watchInvitesReceived WatchInvite[]      @relation("WatchInviteRecipient")
   watchMemberships     WatchRoomMember[]
   watchSetting         WatchSetting?
+  sentChatMessages     ChatMessage[]      @relation("ChatMessageSender")
+  chatMediaViews       ChatMediaView[]
 }
 
 model Home {
@@ -45,6 +47,10 @@ model Home {
   quickNotes  QuickNote[]
   watchRooms  WatchRoom[]
   watchInvites WatchInvite[]
+  chatMessages ChatMessage[]
+  chatSetting ChatSetting?
+  calendarEvents CalendarEvent[]
+  drawingSwapGame DrawingSwapGame?
 }
 
 model PendingHome {
@@ -177,6 +183,95 @@ model QuickNote {
 
   @@unique([homeId, senderId])
   @@index([recipientId])
+}
+
+
+enum ChatMessageKind {
+  TEXT
+  IMAGE
+  VOICE
+}
+
+model ChatMessage {
+  id             String          @id @default(cuid())
+  homeId         String
+  senderId       String
+  content        String          @db.Text
+  kind           ChatMessageKind @default(TEXT)
+  replyToId      String?
+  pinned         Boolean         @default(false)
+  mediaMime      String?
+  mediaData      String?         @db.Text
+  mediaExpiresAt DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  home     Home         @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  sender   User         @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo  ChatMessage? @relation("ChatMessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies  ChatMessage[] @relation("ChatMessageReplies")
+  views    ChatMediaView[]
+
+  @@index([homeId, createdAt])
+  @@index([replyToId])
+}
+
+model ChatMediaView {
+  id        String      @id @default(cuid())
+  messageId String
+  userId    String
+  views     Int         @default(0)
+  updatedAt DateTime    @updatedAt
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+}
+
+model ChatSetting {
+  id         String   @id @default(cuid())
+  homeId     String   @unique
+  background String   @default("linear-gradient(135deg,#160b2e,#050505,#2a0a22)")
+  fontSize   Int      @default(16)
+  textColor  String   @default("#ffffff")
+  fontFamily String   @default("system-ui")
+  updatedAt  DateTime @updatedAt
+
+  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+}
+
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  homeId      String
+  title       String
+  description String   @default("")
+  startAt     DateTime
+  endAt       DateTime?
+  allDay      Boolean  @default(false)
+  color       String   @default("#f9a8d4")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+
+  @@index([homeId, startAt])
+}
+
+model DrawingSwapGame {
+  id          String   @id @default(cuid())
+  homeId      String   @unique
+  status      String   @default("LOBBY")
+  startedAt   DateTime?
+  phaseEndsAt DateTime?
+  drawingA    String?  @db.Text
+  drawingB    String?  @db.Text
+  round       Int      @default(0)
+  durationSec Int      @default(225)
+  swapSec     Int      @default(45)
+  updatedAt   DateTime @updatedAt
+
+  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
 }
 
 model Account {

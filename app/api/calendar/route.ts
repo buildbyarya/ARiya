@@ -1,0 +1,8 @@
+import { getServerSession } from "next-auth"
+import { NextResponse } from "next/server"
+import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
+
+async function ctx(){const s=await getServerSession(authOptions);if(!s?.user?.email)return null;const u=await prisma.user.findUnique({where:{email:s.user.email}});if(!u)return null;const m=await prisma.homeMember.findUnique({where:{userId:u.id}});return m?{u,m}:null}
+export async function GET(){const c=await ctx();if(!c)return NextResponse.json({error:"Unauthorized"},{status:401});const events=await prisma.calendarEvent.findMany({where:{homeId:c.m.homeId},orderBy:{startAt:"asc"}});return NextResponse.json({events})}
+export async function POST(req:Request){const c=await ctx();if(!c)return NextResponse.json({error:"Unauthorized"},{status:401});const b=await req.json();if(b.action==="delete"){await prisma.calendarEvent.deleteMany({where:{id:String(b.id),homeId:c.m.homeId}});return NextResponse.json({ok:true})}if(b.action==="update"){const e=await prisma.calendarEvent.update({where:{id:String(b.id),homeId:c.m.homeId},data:{title:String(b.title||"Untitled"),description:String(b.description||""),startAt:new Date(b.startAt),endAt:b.endAt?new Date(b.endAt):null,allDay:Boolean(b.allDay),color:String(b.color||"#f9a8d4")}});return NextResponse.json({event:e})}const e=await prisma.calendarEvent.create({data:{homeId:c.m.homeId,title:String(b.title||"Untitled"),description:String(b.description||""),startAt:new Date(b.startAt),endAt:b.endAt?new Date(b.endAt):null,allDay:Boolean(b.allDay),color:String(b.color||"#f9a8d4")}});return NextResponse.json({event:e})}
