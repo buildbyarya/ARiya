@@ -16,7 +16,7 @@ function Page(){
  const[search,setSearch]=useState("");const[searchResults,setSearchResults]=useState<Video[]>([]);const[searchMessage,setSearchMessage]=useState("");const[searching,setSearching]=useState(false);const[paste,setPaste]=useState("")
  const[liked,setLiked]=useState<Video[]>([]);const[watchLater,setWatchLater]=useState<Video[]>([]);const[playlists,setPlaylists]=useState<Playlist[]>([]);const[selected,setSelected]=useState("liked");const[playlistVideos,setPlaylistVideos]=useState<Video[]>([]);const[sourcesOpen,setSourcesOpen]=useState(false)
  const[inviteMessage,setInviteMessage]=useState("");const[playerStarted,setPlayerStarted]=useState(false)
- const player=useRef<any>(null);const suppress=useRef(false);const version=useRef(-1);const initialized=useRef(false);const lastLocalAction=useRef(0);const lastRemotePosition=useRef<number|null>(null);const lastRemotePlaying=useRef<boolean|null>(null)
+ const player=useRef<any>(null);const suppress=useRef(false);const version=useRef(-1);const initialized=useRef(false);const lastLocalAction=useRef(0);const lastRemotePosition=useRef<number|null>(null);const lastRemotePlaying=useRef<boolean|null>(null);const hadPartner=useRef(false);const [partnerLeft,setPartnerLeft]=useState(false)
  const lastLocal={position:useRef(0),video:useRef(""),volume:useRef(100),rate:useRef(1)}
 
  async function api(body:any){return fetch("/api/youtube/watch-together",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})}
@@ -71,6 +71,8 @@ function Page(){
    const r=await fetch("/api/youtube/watch-together?roomId="+encodeURIComponent(roomId),{cache:"no-store"});if(!r.ok)return
    const d=await r.json();if(stop||!d.room)return
    setRoom(d.room)
+   if(hadPartner.current&& !d.room.otherPresent){setPartnerLeft(true)}
+   if(d.room.otherPresent)hadPartner.current=true
    if(playerReady&&player.current&&!initialized.current){applyRemote(d.room,true);initialized.current=true;return}
    if(!playerReady||!player.current||!initialized.current||suppress.current)return
    const incoming=Number(d.room.version??-1);const local=Number(player.current.getCurrentTime?.()||0);const current=player.current.getVideoData?.().video_id||""
@@ -112,10 +114,11 @@ function Page(){
   try{const r=await fetch("/api/youtube/search?q="+encodeURIComponent(q),{cache:"no-store"});const d=await r.json();if(!r.ok){setSearchResults([]);setSearchMessage(d.message||"YouTube search is unavailable.");return}setSearchResults(d||[])}catch{setSearchMessage("Search failed. Please try again.")}finally{setSearching(false)}
  }
  function extractId(value:string){try{const u=new URL(value.trim());if(u.hostname.includes("youtu.be"))return u.pathname.slice(1).split("/")[0]||null;if(u.hostname.includes("youtube.com"))return u.searchParams.get("v")||u.pathname.split("/").filter(Boolean).pop()||null}catch{}return null}
- function choose(id:string){if(!room?.isLeader||!player.current||!playerReady)return;setPlayerStarted(true);suppress.current=true;player.current.loadVideoById({videoId:id,startSeconds:0});setTimeout(()=>{suppress.current=false;initialized.current=true;lastLocalAction.current=Date.now();void sync(true)},700)}
+ function choose(id:string){if(!player.current||!playerReady)return;setPlayerStarted(true);suppress.current=true;player.current.loadVideoById({videoId:id,startSeconds:0});setTimeout(()=>{suppress.current=false;initialized.current=true;lastLocalAction.current=Date.now();void sync(true)},700)}
  function chooseVideo(v:Video){choose(v.id)}
  function openPlaylist(pl:Playlist){setSelected(pl.id);setPlaylistVideos([]);void (async()=>{const ids=pl.videos.map(v=>v.id).join(",");if(!ids)return;try{const r=await fetch("/api/youtube/videos?ids="+encodeURIComponent(ids));if(r.ok)setPlaylistVideos(await r.json())}catch{}})()}
  async function resendInvite(){const r=await api({action:"resend-invite",roomId});if(r.ok)setInviteMessage("Invite sent again.");else setInviteMessage("Could not send the invite again.")}
+ function dismissPartnerLeft(){setPartnerLeft(false)}
  async function leave(){await api({action:"leave",roomId});router.push("/watch/youtube")}
  const displayed=selected==="liked"?liked:selected==="watchLater"?watchLater:playlistVideos
 
@@ -126,6 +129,7 @@ function Page(){
   <div className="relative mt-4 aspect-video w-full overflow-hidden rounded-3xl bg-black"><div id="wt-player" className="h-full w-full"/>{needsStart&&<button onClick={()=>{player.current?.playVideo?.();setNeedsStart(false);setPlayerStarted(true)}} className="absolute inset-0 flex items-center justify-center bg-black/70 text-lg font-semibold">▶ Tap to start video</button>}</div>
   {playerError&&<p className="mt-2 rounded-xl bg-red-500/10 p-3 text-sm text-red-200">{playerError}</p>}
   {!room.otherPresent&&room.isLeader&&<button onClick={()=>void resendInvite()} className="mt-3 w-full rounded-2xl bg-white/10 py-3">📨 Invite partner again</button>}
+  {partnerLeft&&<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm"><div className="w-full max-w-sm rounded-3xl border border-white/10 bg-zinc-950 p-6 text-center shadow-2xl"><div className="text-4xl">👋</div><h2 className="mt-3 text-xl font-bold">Your partner left</h2><p className="mt-2 text-sm text-white/60">The other user has left the Watch Together room.</p><button onClick={dismissPartnerLeft} className="mt-5 w-full rounded-xl bg-white/10 py-3">Okay</button></div></div>}
   {inviteMessage&&<p className="mt-2 text-center text-sm text-white/60">{inviteMessage}</p>}
 
   <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
@@ -142,7 +146,7 @@ function Page(){
     {selected==="search"&&<div className="space-y-2"><div className="flex gap-2"><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&void searchVideos()} placeholder="Search YouTube" className="min-w-0 flex-1 rounded-xl bg-white/10 px-3 py-3 outline-none"/><button onClick={()=>void searchVideos()} disabled={searching} className="rounded-xl bg-white/10 px-4">{searching?"…":"Search"}</button></div><div className="flex gap-2"><input value={paste} onChange={e=>setPaste(e.target.value)} placeholder="Paste YouTube link" className="min-w-0 flex-1 rounded-xl bg-white/10 px-3 py-3 outline-none"/><button onClick={()=>{const id=extractId(paste);if(id&&room.isLeader)choose(id)}} className="rounded-xl bg-white/10 px-4">Load</button></div>{searchMessage&&<p className="rounded-xl bg-white/5 p-3 text-sm text-white/60">{searchMessage}</p>}</div>}
     {selected!=="search"&&displayed.length===0&&<p className="py-4 text-center text-sm text-white/40">No videos here yet.</p>}
     {(selected==="search"?searchResults:displayed).map(v=><button key={v.id} disabled={!room.isLeader} onClick={()=>chooseVideo(v)} className="flex w-full gap-3 rounded-xl bg-white/5 p-2 text-left disabled:opacity-50">{v.thumbnail?<img src={v.thumbnail} alt="" className="h-16 w-28 rounded-lg object-cover"/>:<div className="h-16 w-28 rounded-lg bg-white/10"/>}<span className="min-w-0"><span className="block truncate text-sm font-medium">{v.title||v.id}</span><span className="block truncate text-xs text-white/40">{v.channel||"YouTube"}</span></span></button>)}
-    {!room.isLeader&&<p className="text-xs text-white/40">The inviter controls playback and chooses the next video.</p>}
+    {!room.isLeader&&<p className="text-xs text-white/40">Both users can control playback. The latest change is shared with both sides.</p>}
    </div>}
   </div>
  </div></main>
