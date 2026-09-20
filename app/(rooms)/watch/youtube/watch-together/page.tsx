@@ -14,7 +14,7 @@ function Page(){
  const[playerReady,setPlayerReady]=useState(false);const[playerError,setPlayerError]=useState("")
  const[searching,setSearching]=useState(false);const[searchMessage,setSearchMessage]=useState("")
  const[popup,setPopup]=useState<string|null>(null);const[chat,setChat]=useState<ChatMessage[]>([]);const[chatText,setChatText]=useState("");const[chatSending,setChatSending]=useState(false)
- const player=useRef<any>(null);const suppress=useRef(false);const version=useRef(-1);const initialized=useRef(false);const previousOther=useRef<boolean|null>(null);const lastAction=useRef(0)
+ const player=useRef<any>(null);const suppress=useRef(false);const version=useRef(-1);const initialized=useRef(false);const previousOther=useRef<boolean|null>(null);const lastAction=useRef(0);const lastCorrection=useRef(0)
 
  async function api(body:any){return fetch("/api/youtube/watch-together",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})}
 
@@ -63,6 +63,15 @@ function Page(){
     initialized.current=true
    }else if(playerReady&&player.current&&d.room.version!==version.current){
     applyRemote(d.room,false)
+   }else if(playerReady&&player.current&&initialized.current&&!suppress.current){
+    const localPosition=Number(player.current.getCurrentTime?.()||0)
+    const expectedPosition=Number(d.room.position||0)
+    const drift=Math.abs(expectedPosition-localPosition)
+    const shouldCorrect=drift>=1.0||(d.room.playing===false&&drift>=0.35)
+    if(shouldCorrect&&Date.now()-lastCorrection.current>=1500){
+     lastCorrection.current=Date.now()
+     applyRemote(d.room,false)
+    }
    }
   }
   poll();const t=setInterval(poll,750);return()=>{stop=true;clearInterval(t)}
