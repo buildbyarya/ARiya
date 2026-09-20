@@ -1,16 +1,16 @@
-# ARiya Architecture
+# Satella Architecture
 
-> This document is the source of truth for ARiya's vision, philosophy, architecture, and major design decisions.
+> This document is the source of truth for Satella's vision, philosophy, architecture, and major design decisions.
 >
 > Whenever a feature changes because of a product decision (not just code), this document must be updated.
 >
-> Every AI assistant or developer working on ARiya should read this document before making changes.
+> Every AI assistant or developer working on Satella should read this document before making changes.
 
 ---
 
-# What is ARiya?
+# What is Satella?
 
-ARiya (Arya + Riya) is a **Couple Operating System**.
+Satella is a **Couple Operating System**.
 
 It is **not** another messaging application.
 
@@ -30,7 +30,7 @@ instead of
 
 # Core Philosophy
 
-ARiya exists to create shared experiences.
+Satella exists to create shared experiences.
 
 Everything inside the application should answer one question:
 
@@ -208,7 +208,7 @@ Future additions:
 
 # Library Philosophy
 
-The Library is the foundation of media inside ARiya.
+The Library is the foundation of media inside Satella.
 
 Everything eventually belongs inside the Library.
 
@@ -253,7 +253,7 @@ They exist for birthdays, anniversaries, important moments and future delivery.
 
 # Privacy
 
-Privacy is one of ARiya's core values.
+Privacy is one of Satella's core values.
 
 Good examples:
 
@@ -274,7 +274,7 @@ Future activity sharing requires consent from both partners.
 
 # Design Philosophy
 
-ARiya should feel:
+Satella should feel:
 
 - Minimal
 - Modern
@@ -326,7 +326,7 @@ Authentication
 
 Before implementing any feature ask:
 
-1. Does it fit ARiya's philosophy?
+1. Does it fit Satella's philosophy?
 2. Can an existing system be reused?
 3. Is this feature simple enough?
 4. Does it improve the feeling of being "home"?

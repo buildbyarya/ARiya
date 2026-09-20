@@ -1,6 +1,6 @@
-# ARiya Database
+# Satella Database
 
-> This document explains the purpose of every database model in ARiya.
+> This document explains the purpose of every database model in Satella.
 >
 > It focuses on why each model exists rather than the Prisma implementation.
 
@@ -12,7 +12,7 @@ The database should remain simple.
 
 Avoid creating new tables unless they solve a real problem.
 
-Store only the data ARiya truly owns.
+Store only the data Satella truly owns.
 
 Information that can always be retrieved from external services (such as YouTube video titles or thumbnails) should not be permanently stored unless there is a clear benefit.
 
@@ -74,7 +74,7 @@ If a member leaves a Home, these memories remain part of that chapter and do not
 
 ## Purpose
 
-Represents every media collection in ARiya.
+Represents every media collection in Satella.
 
 Examples:
 

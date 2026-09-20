@@ -1,6 +1,6 @@
-# ARiya Roadmap
+# Satella Roadmap
 
-> This file tracks the development progress of ARiya.
+> This file tracks the development progress of Satella.
 >
 > Features move from one version to the next.
 > A version is complete only when every feature inside it is finished and tested.
@@ -140,15 +140,19 @@ Features:
 
 ---
 
-# Future
+# Future Ideas
 
-- Shared Pet
+- Shared Pets
+- Dual Drawing
+- Shared Calendar
+- Games
 - Voice Calls
 - Video Calls
 - Mobile App
 - Desktop App
 - Widgets
 - AI Features
+- More shared experiences
 
 ---
 

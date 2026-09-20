@@ -1,14 +1,14 @@
-# ARiya — Project Context
+# Satella — Project Context
 
 > **Source of truth.** Keep this document current whenever product, architecture, UX, privacy, or roadmap decisions change.
 
 ## Vision
 
-ARiya (Arya + Riya) is a **Couple Operating System**: a private digital home for exactly two partners to spend time together. It is not a messaging replacement or social network.
+Satella is a **Couple Operating System**: a private digital home for exactly two partners to spend time together. It is not a messaging replacement or social network.
 
 The intended feeling is: **“I’m going home,”** rather than “I’m opening another app.”
 
-ARiya prioritizes shared experiences, togetherness, comfort, privacy, memories, and simplicity. It deliberately excludes public feeds, followers, communities, strangers, friend requests, user search, and surveillance-style activity tracking.
+Satella prioritizes shared experiences, togetherness, comfort, privacy, memories, and simplicity. It deliberately excludes public feeds, followers, communities, strangers, friend requests, user search, and surveillance-style activity tracking.
 
 ## Product model
 
@@ -21,7 +21,7 @@ ARiya prioritizes shared experiences, togetherness, comfort, privacy, memories, 
 
 ## Privacy principles
 
-ARiya should never feel creepy. Online status, deliberately shared activities, shared playlists, and inviting a partner are appropriate. It must not track every click, visited page, action, or typing state.
+Satella should never feel creepy. Online status, deliberately shared activities, shared playlists, and inviting a partner are appropriate. It must not track every click, visited page, action, or typing state.
 
 Any future activity sharing requires explicit opt-in from **both** partners.
 

@@ -1,6 +1,6 @@
-# ARiya Features
+# Satella Features
 
-> This document describes the purpose, behavior, rules, and future plans for every feature in ARiya.
+> This document describes the purpose, behavior, rules, and future plans for every feature in Satella.
 >
 > It explains WHAT a feature should do, not HOW it is implemented.
 
@@ -34,7 +34,7 @@ It exists to let users:
 
 The Home is the shared digital house.
 
-Every feature inside ARiya should feel like another room inside the Home.
+Every feature inside Satella should feel like another room inside the Home.
 
 Current modules:
 
