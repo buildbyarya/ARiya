@@ -138,7 +138,7 @@ export async function POST(request: Request) {
 
   if (body.action === "settings") {
     const current = await setting(homeId)
-    const data: Record<string, unknown> = {}
+    const data: { background?: string; fontSize?: number; textColor?: string; fontFamily?: string } = {}
     if (typeof body.background === "string") data.background = body.background.slice(0, 1000)
     if (Number.isFinite(Number(body.fontSize))) data.fontSize = Math.min(24, Math.max(12, Number(body.fontSize)))
     if (typeof body.textColor === "string") data.textColor = body.textColor
