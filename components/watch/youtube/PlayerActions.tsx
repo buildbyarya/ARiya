@@ -16,3 +16,5 @@ export default function PlayerActions({videoId}:PlayerActionsProps){
   <button className="rounded-2xl bg-white/10 p-4 hover:bg-white/20 transition">➕ Playlist</button>
   <button className="rounded-2xl bg-white/10 p-4 hover:bg-white/20 transition">👥 Invite Partner</button>
  </div>
+
+}

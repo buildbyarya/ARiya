@@ -1,12 +1,13 @@
 "use client"
 
 import {Suspense,useEffect,useRef,useState} from "react"
-import {useSearchParams} from "next/navigation"
+import {useRouter,useSearchParams} from "next/navigation"
 import PageHeader from "@/components/common/PageHeader"
 
 declare global{interface Window{YT:any;onYouTubeIframeAPIReady?:()=>void}}
 
 function Page(){
+  const router=useRouter()
   const p=useSearchParams()
   const videoId=p.get("id")
   const title=p.get("title")||"YouTube Video"
@@ -18,7 +19,7 @@ function Page(){
 
   useEffect(()=>{
     if(!videoId)return
-    fetch("/api/youtube/library",{cache:"no-store"}).then(r=>r.json()).then(a=>Array.isArray(a)&&setSaved({liked:a.some((x:any)=>x.videoId===videoId&&x.type==="liked"),watch_later:a.some((x:any)=>x.videoId===videoId&&x.type==="watch_later")})).catch(()=>setMessage("Could not load your YouTube library."))
+    fetch("/api/youtube/library",{cache:"no-store"}).then(r=>r.json()).then(a=>Array.isArray(a)&&setSaved({liked:a.some((x:any)=>x.videoId===videoId&&x.type==="LIKED"),watch_later:a.some((x:any)=>x.videoId===videoId&&x.type==="WATCH_LATER")})).catch(()=>setMessage("Could not load your YouTube library."))
   },[videoId])
 
   useEffect(()=>{
