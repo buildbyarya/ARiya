@@ -142,7 +142,7 @@ export async function POST(request: Request) {
 
   const home = await prisma.home.create({
     data: {
-      name: "ARiya Home",
+      name: "Satella Home",
 
       inviteCode: code,
 
