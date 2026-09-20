@@ -48,7 +48,7 @@ function Page(){
       const r=await fetch("/api/youtube/watch-together",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"create-invite",videoId,position:player.current?.getCurrentTime?.()||0,playing:player.current?.getPlayerState?.()===1,volume:player.current?.getVolume?.()??100,playbackRate:player.current?.getPlaybackRate?.()??1})})
       const d=await r.json().catch(()=>({}))
       if(!r.ok){setMessage(d?.error||"Could not send Watch Together invitation.");return}
-      setMessage("Watch Together invitation sent ❤️")
+      router.push("/watch/youtube/watch-together?roomId="+encodeURIComponent(d.roomId))
     }catch{setMessage("Network error. Please try again.")}finally{setBusy(null)}
   }
 

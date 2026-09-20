@@ -10,7 +10,7 @@ export async function GET(){
  const [incoming,responded,replies]=await Promise.all([
   prisma.watchInvite.findMany({where:{recipientId:u.id,status:"PENDING",expiresAt:{gt:new Date()}},include:{sender:true},orderBy:{createdAt:"desc"}}),
   prisma.watchInvite.findMany({where:{senderId:u.id,status:{in:["DECLINED","ACCEPTED"]},respondedAt:{gt:since}},include:{recipient:true},orderBy:{respondedAt:"desc"}}),
-  prisma.watchInvite.findMany({where:{senderId:u.id,status:"PENDING",customMessage:{not:null}},include:{recipient:true},orderBy:{createdAt:"desc"}})
+  prisma.watchInvite.findMany({where:{senderId:u.id,status:"PENDING",customMessage:{not:null},createdAt:{gt:since}},include:{recipient:true},orderBy:{createdAt:"desc"}})
  ])
  return NextResponse.json({
   notifications:incoming.map(i=>({id:i.id,text:(i.sender.nickname||i.sender.name||"Someone")+" invited you to watch YouTube",customMessage:i.customMessage,expiresAt:i.expiresAt.toISOString()})),
