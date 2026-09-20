@@ -3,6 +3,43 @@ import { NextResponse } from "next/server"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
-async function ctx(){const s=await getServerSession(authOptions);if(!s?.user?.email)return null;const u=await prisma.user.findUnique({where:{email:s.user.email}});if(!u)return null;const m=await prisma.homeMember.findUnique({where:{userId:u.id},include:{home:{include:{members:true}}}});return m?{u,m}:null}
-export async function GET(){const c=await ctx();if(!c)return NextResponse.json({error:"Unauthorized"},{status:401});const g=await prisma.drawingSwapGame.upsert({where:{homeId:c.m.homeId},create:{homeId:c.m.homeId},update:{}});let game=g;if(game.status==="RUNNING"&&game.phaseEndsAt&&game.phaseEndsAt.getTime()<=Date.now()){const next=game.round+1;if(Date.now()-(game.startedAt?.getTime()||Date.now())>=game.durationSec*1000)game=await prisma.drawingSwapGame.update({where:{id:game.id},data:{status:"REVEAL",round:next}});else game=await prisma.drawingSwapGame.update({where:{id:game.id},data:{round:next,phaseEndsAt:new Date(Date.now()+game.swapSec*1000)}})}const side=[...c.m.home.members].sort((a,b)=>a.joinedAt.getTime()-b.joinedAt.getTime()).findIndex(m=>m.userId===c.u.id)===0?"A":"B";return NextResponse.json({game,side})}
-export async function POST(req:Request){const c=await ctx();if(!c)return NextResponse.json({error:"Unauthorized"},{status:401});const b=await req.json();let g=await prisma.drawingSwapGame.upsert({where:{homeId:c.m.homeId},create:{homeId:c.m.homeId},update:{}});if(b.action==="start"){g=await prisma.drawingSwapGame.update({where:{id:g.id},data:{status:"RUNNING",startedAt:new Date(),phaseEndsAt:new Date(Date.now()+45000),round:0,drawingA:null,drawingB:null}})}else if(b.action==="reset"){g=await prisma.drawingSwapGame.update({where:{id:g.id},data:{status:"LOBBY",startedAt:null,phaseEndsAt:null,round:0,drawingA:null,drawingB:null}})}else if(b.action==="save"){const field=b.side==="A"?"drawingA":"drawingB";g=await prisma.drawingSwapGame.update({where:{id:g.id},data:{[field]:String(b.data||"")}})}return NextResponse.json({game:g})}
+async function ctx(){
+  const s=await getServerSession(authOptions)
+  if(!s?.user?.email)return null
+  const u=await prisma.user.findUnique({where:{email:s.user.email}})
+  if(!u)return null
+  const m=await prisma.homeMember.findUnique({where:{userId:u.id},include:{home:{include:{members:true}}}})
+  return m?{u,m}:null
+}
+export async function GET(){
+  const c=await ctx()
+  if(!c)return NextResponse.json({error:"Unauthorized"},{status:401})
+  const g=await prisma.drawingSwapGame.upsert({where:{homeId:c.m.homeId},create:{homeId:c.m.homeId},update:{}})
+  let game=g
+  if(game.status==="RUNNING"&&game.phaseEndsAt&&game.phaseEndsAt.getTime()<=Date.now()){
+    const next=game.round+1
+    if(Date.now()-(game.startedAt?.getTime()||Date.now())>=game.durationSec*1000)
+      game=await prisma.drawingSwapGame.update({where:{id:game.id},data:{status:"REVEAL",round:next}})
+    else
+      game=await prisma.drawingSwapGame.update({where:{id:game.id},data:{round:next,phaseEndsAt:new Date(Date.now()+game.swapSec*1000)}})
+  }
+  const side=[...c.m.home.members].sort((a,b)=>a.joinedAt.getTime()-b.joinedAt.getTime()).findIndex(m=>m.userId===c.u.id)===0?"A":"B"
+  return NextResponse.json({game,side})
+}
+export async function POST(req:Request){
+  const c=await ctx()
+  if(!c)return NextResponse.json({error:"Unauthorized"},{status:401})
+  const b=await req.json()
+  let g=await prisma.drawingSwapGame.upsert({where:{homeId:c.m.homeId},create:{homeId:c.m.homeId},update:{}})
+  if(b.action==="start"){
+    g=await prisma.drawingSwapGame.update({where:{id:g.id},data:{status:"RUNNING",startedAt:new Date(),phaseEndsAt:new Date(Date.now()+45000),round:0,drawingA:null,drawingB:null}})
+  }else if(b.action==="reset"){
+    g=await prisma.drawingSwapGame.update({where:{id:g.id},data:{status:"LOBBY",startedAt:null,phaseEndsAt:null,round:0,drawingA:null,drawingB:null}})
+  }else if(b.action==="save"){
+    const data=String(b.data||"")
+    g=b.side==="A"
+      ? await prisma.drawingSwapGame.update({where:{id:g.id},data:{drawingA:data}})
+      : await prisma.drawingSwapGame.update({where:{id:g.id},data:{drawingB:data}})
+  }
+  return NextResponse.json({game:g})
+}
