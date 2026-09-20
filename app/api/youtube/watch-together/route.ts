@@ -25,7 +25,7 @@ export async function GET(req:Request){
  if(!room)return NextResponse.json({error:"Room not found"},{status:404})
  const me=room.members.find(m=>m.userId===c.user.id);if(!me)return NextResponse.json({error:"Not in room"},{status:403})
  await prisma.watchRoomMember.update({where:{id:me.id},data:{lastSeenAt:new Date()}})
- const leader=[...room.members].sort((a,b)=>a.joinedAt.getTime()-b.joinedAt.getTime())[0];const other=room.members.find(m=>m.userId!==c.user.id&&!m.leftAt)
+ const leader=[...room.members].sort((a,b)=>a.joinedAt.getTime()-b.joinedAt.getTime())[0];const other=room.members.find(m=>m.userId!==c.user.id&&!m.leftAt&&m.lastSeenAt.getTime()>Date.now()-5000)
  if(wantsChat){
   const chat=await prisma.watchChatMessage.findMany({where:{roomId},orderBy:{createdAt:"asc"},take:100})
   return NextResponse.json({chat:chat.map(m=>{const d=decodeChat(m.content);return{id:m.id,senderId:m.senderId,senderNickname:m.senderNickname,content:d.content,reply:d.reply,createdAt:m.createdAt.toISOString()}})})
@@ -85,8 +85,6 @@ export async function POST(req:Request){
   if(b.action==="sync"){
    const room=await prisma.watchRoom.findFirst({where:{id:String(b.roomId),homeId:c.membership.home.id},include:{members:true}})
    if(!room||!room.members.some(m=>m.userId===c.user.id&&!m.leftAt))return NextResponse.json({error:"You are not a member of this Watch Together room."},{status:403})
-   const leader=[...room.members].sort((a,b)=>a.joinedAt.getTime()-b.joinedAt.getTime())[0]
-   if(leader?.userId!==c.user.id)return NextResponse.json({error:"Playback is controlled by the inviter."},{status:409})
    const u=await prisma.watchRoom.update({where:{id:room.id},data:{videoId:String(b.videoId||room.videoId),position:Math.max(0,num(b.position,room.position)),playing:Boolean(b.playing),volume:Math.max(0,Math.min(100,num(b.volume,room.volume))),playbackRate:Math.max(.25,Math.min(2,num(b.playbackRate,room.playbackRate))),version:{increment:1},lastActionAt:now}})
    return NextResponse.json({version:u.version})
   }
