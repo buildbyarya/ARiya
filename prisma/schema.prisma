@@ -70,7 +70,7 @@ model HomeMember {
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   home      Home       @relation(fields: [homeId], references: [id], onDelete: Cascade)
   playlists Playlist[]
-  joinedAt  DateTime   @default(now())
+  joinedAt   DateTime   @default(now())
 
   @@unique([userId, homeId])
 }
@@ -221,7 +221,7 @@ model WatchRoom {
   videoId      String
   position     Float    @default(0)
   playing      Boolean  @default(false)
-  volume       Int      @default(100)
+  volume       Int     @default(100)
   playbackRate Float    @default(1)
   version      Int      @default(0)
   lastActionAt DateTime @default(now())
