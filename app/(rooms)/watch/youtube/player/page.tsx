@@ -24,7 +24,7 @@ function Page(){
 
   useEffect(()=>{
     if(!videoId)return
-    const make=()=>{if(!window.YT?.Player||player.current)return;player.current=new window.YT.Player("solo-player",{videoId,playerVars:{playsinline:1,enablejsapi:1}})}
+    const make=()=>{if(!window.YT?.Player||player.current)return;player.current=new window.YT.Player("solo-player",{videoId,playerVars:{playsinline:1,enablejsapi:1,origin:window.location.origin,rel:0,iv_load_policy:3},events:{onError:()=>setMessage("YouTube could not load this video.")}})}
     if(window.YT?.Player)make()
     else{window.onYouTubeIframeAPIReady=make;const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";document.body.appendChild(s)}
     return()=>{player.current?.destroy?.();player.current=null}
