@@ -1,7 +1,6 @@
 "use client"
 import {useEffect,useRef,useState} from "react"
 import type { PointerEvent } from "react"
-import type { PointerEvent } from "react"
 import PageHeader from "@/components/common/PageHeader"
 
 type Game={status:string;startedAt:string|null;phaseEndsAt:string|null;drawingA:string|null;drawingB:string|null;round:number;durationSec:number;swapSec:number}
