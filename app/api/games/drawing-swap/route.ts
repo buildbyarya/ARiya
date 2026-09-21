@@ -24,7 +24,7 @@ export async function GET(){
       game=await prisma.drawingSwapGame.update({where:{id:game.id},data:{round:next,phaseEndsAt:new Date(Date.now()+game.swapSec*1000)}})
   }
   const side=[...c.m.home.members].sort((a,b)=>a.joinedAt.getTime()-b.joinedAt.getTime()).findIndex(m=>m.userId===c.u.id)===0?"A":"B"
-  return NextResponse.json({game,side})
+  return NextResponse.json({game,side,members:c.m.home.members.length})
 }
 export async function POST(req:Request){
   const c=await ctx()
