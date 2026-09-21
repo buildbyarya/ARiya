@@ -37,7 +37,7 @@ export async function GET(req:Request){
   return NextResponse.json({liked:grouped("LIKED"),watchLater:grouped("WATCH_LATER"),playlists:playlists.map(p=>({id:p.id,name:p.name,visibility:p.visibility,systemType:p.systemType,videos:p.videos.map(v=>({id:v.youtubeVideoId}))}))})
  }
  const elapsed=room.playing?Math.max(0,(Date.now()-room.lastActionAt.getTime())/1000):0
- return NextResponse.json({room:{id:room.id,videoId:room.videoId,position:room.position+elapsed,playing:room.playing,volume:room.volume,playbackRate:room.playbackRate,version:room.version,isLeader:leader?.userId===c.user.id,leaderId:leader?.userId||"",leaderNickname:leader?.user.nickname||leader?.user.name||"Your partner",otherPresent:Boolean(other),otherNickname:other?.user.nickname||other?.user.name||"Your partner",otherLeftAt:other?.leftAt?.toISOString()||null}})
+ return NextResponse.json({room:{id:room.id,videoId:room.videoId,position:room.position+elapsed,playing:room.playing,volume:room.volume,playbackRate:room.playbackRate,version:room.version,isLeader:leader?.userId===c.user.id,leaderId:leader?.userId||"",leaderNickname:leader?.user.nickname||leader?.user.name||"Your partner",otherPresent:Boolean(other),otherNickname:other?.user.nickname||other?.user.name||"Your partner",otherLeftAt:otherMember?.leftAt?.toISOString()||null,inviteReply:replyInvite?{id:replyInvite.id,message:replyInvite.customMessage}:null}})
 }
 
 export async function POST(req:Request){
@@ -81,6 +81,12 @@ export async function POST(req:Request){
    if(b.response==="reply"){const message=String(b.message||"").trim().slice(0,500);if(!message)return NextResponse.json({error:"Write a message first."},{status:400});await prisma.watchInvite.update({where:{id:i.id},data:{customMessage:message}});return NextResponse.json({status:"PENDING"})}
    if(b.response==="accept"){await prisma.watchInvite.update({where:{id:i.id},data:{status:"ACCEPTED",respondedAt:now}});await prisma.watchRoomMember.upsert({where:{roomId_userId:{roomId:i.roomId,userId:c.user.id}},create:{roomId:i.roomId,userId:c.user.id},update:{leftAt:null,lastSeenAt:now}});return NextResponse.json({status:"ACCEPTED",roomId:i.roomId})}
    return NextResponse.json({error:"Invalid invitation response."},{status:400})
+  }
+  if(b.action==="dismiss-reply"){
+   const invite=await prisma.watchInvite.findFirst({where:{id:String(b.inviteId),senderId:c.user.id}})
+   if(!invite)return NextResponse.json({error:"Reply not found."},{status:404})
+   await prisma.watchInvite.update({where:{id:invite.id},data:{replySeenAt:now}})
+   return NextResponse.json({ok:true})
   }
   if(b.action==="sync"){
    const room=await prisma.watchRoom.findFirst({where:{id:String(b.roomId),homeId:c.membership.home.id},include:{members:true}})
