@@ -74,7 +74,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url)
   const q = url.searchParams.get("q")?.trim().toLowerCase()
   const [messages, chatSetting] = await Promise.all([payload(c.membership.homeId, c.user.id), setting(c.membership.homeId)])
-  return NextResponse.json({ messages: q ? messages.filter(m => m.content.toLowerCase().includes(q)) : messages, setting: chatSetting })
+  return NextResponse.json({ userId: c.user.id, messages: q ? messages.filter(m => m.content.toLowerCase().includes(q)) : messages, setting: chatSetting })
 }
 
 export async function POST(request: Request) {
