@@ -15,9 +15,10 @@ function Page(){
  const[chat,setChat]=useState<ChatMessage[]>([]);const[chatText,setChatText]=useState("");const[replyTo,setReplyTo]=useState<ChatMessage|null>(null);const[chatSending,setChatSending]=useState(false)
  const[search,setSearch]=useState("");const[searchResults,setSearchResults]=useState<Video[]>([]);const[searchMessage,setSearchMessage]=useState("");const[searching,setSearching]=useState(false);const[paste,setPaste]=useState("")
  const[liked,setLiked]=useState<Video[]>([]);const[watchLater,setWatchLater]=useState<Video[]>([]);const[playlists,setPlaylists]=useState<Playlist[]>([]);const[selected,setSelected]=useState("liked");const[playlistVideos,setPlaylistVideos]=useState<Video[]>([]);const[sourcesOpen,setSourcesOpen]=useState(false)
- const[inviteMessage,setInviteMessage]=useState("");const[playerStarted,setPlayerStarted]=useState(false)
+ const[inviteMessage,setInviteMessage]=useState("");const[playerStarted,setPlayerStarted]=useState(false);const[replyToast,setReplyToast]=useState<any>(null)
  const player=useRef<any>(null);const suppress=useRef(false);const version=useRef(-1);const initialized=useRef(false);const lastLocalAction=useRef(0);const lastRemotePosition=useRef<number|null>(null);const lastRemotePlaying=useRef<boolean|null>(null);const hadPartner=useRef(false);const [partnerLeft,setPartnerLeft]=useState(false)
  const lastLocal={position:useRef(0),video:useRef(""),volume:useRef(100),rate:useRef(1)}
+ const lastPartnerLeftAt=useRef("")
 
  async function api(body:any){return fetch("/api/youtube/watch-together",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})}
 
@@ -37,7 +38,7 @@ function Page(){
    if(cancelled||!window.YT?.Player||player.current)return
    const el=document.getElementById("wt-player");if(!el)return
    player.current=new window.YT.Player(el,{videoId:room.videoId,playerVars:{playsinline:1,controls:1,rel:0,origin:window.location.origin},events:{
-    onReady:()=>{setPlayerReady(true);initialized.current=false},
+    onReady:(event:any)=>{try{event.target.cueVideoById({videoId:room.videoId,startSeconds:Number(room.position||0)})}catch{};setPlayerReady(true);initialized.current=false},
     onStateChange:()=>{if(initialized.current&&!suppress.current)void sync(true)},
     onPlaybackRateChange:()=>{if(initialized.current&&!suppress.current)void sync(true)},
     onError:(e:any)=>{console.error(e);setPlayerError("YouTube could not load this video.")}
@@ -71,8 +72,9 @@ function Page(){
    const r=await fetch("/api/youtube/watch-together?roomId="+encodeURIComponent(roomId),{cache:"no-store"});if(!r.ok)return
    const d=await r.json();if(stop||!d.room)return
    setRoom(d.room)
-   if(hadPartner.current&& !d.room.otherPresent){setPartnerLeft(true)}
-   if(d.room.otherPresent)hadPartner.current=true
+   if(d.room.otherPresent){hadPartner.current=true}
+   else if(hadPartner.current&&d.room.otherLeftAt&&d.room.otherLeftAt!==lastPartnerLeftAt.current){lastPartnerLeftAt.current=d.room.otherLeftAt;setPartnerLeft(true)}
+   if(d.room.inviteReply&&!replyToast)setReplyToast(d.room.inviteReply)
    if(playerReady&&player.current&&!initialized.current){applyRemote(d.room,true);initialized.current=true;return}
    if(!playerReady||!player.current||!initialized.current||suppress.current)return
    const incoming=Number(d.room.version??-1);const local=Number(player.current.getCurrentTime?.()||0);const current=player.current.getVideoData?.().video_id||""
@@ -118,7 +120,9 @@ function Page(){
  function chooseVideo(v:Video){choose(v.id)}
  function openPlaylist(pl:Playlist){setSelected(pl.id);setPlaylistVideos([]);void (async()=>{const ids=pl.videos.map(v=>v.id).join(",");if(!ids)return;try{const r=await fetch("/api/youtube/videos?ids="+encodeURIComponent(ids));if(r.ok)setPlaylistVideos(await r.json())}catch{}})()}
  async function resendInvite(){const r=await api({action:"resend-invite",roomId});if(r.ok)setInviteMessage("Invite sent again.");else setInviteMessage("Could not send the invite again.")}
+ async function dismissReply(){if(replyToast)await api({action:"dismiss-reply",inviteId:replyToast.id});setReplyToast(null)}
  function dismissPartnerLeft(){setPartnerLeft(false)}
+ async function previewPaste(){const id=extractId(paste);if(!id){setSearchMessage("That does not look like a valid YouTube link.");return}setSearching(true);setSearchMessage("");try{const r=await fetch("/api/youtube/videos?ids="+encodeURIComponent(id),{cache:"no-store"});const d=await r.json();const v=Array.isArray(d)?d[0]:d;if(v){setSearchResults([v])}else{setSearchResults([{id,title:"YouTube video",thumbnail:"https://i.ytimg.com/vi/"+id+"/hqdefault.jpg",channel:"YouTube"}])}setSelected("search");setSourcesOpen(true)}finally{setSearching(false)}}
  async function leave(){await api({action:"leave",roomId});router.push("/watch/youtube")}
  const displayed=selected==="liked"?liked:selected==="watchLater"?watchLater:playlistVideos
 
@@ -130,6 +134,7 @@ function Page(){
   {playerError&&<p className="mt-2 rounded-xl bg-red-500/10 p-3 text-sm text-red-200">{playerError}</p>}
   {!room.otherPresent&&room.isLeader&&<button onClick={()=>void resendInvite()} className="mt-3 w-full rounded-2xl bg-white/10 py-3">📨 Invite partner again</button>}
   {partnerLeft&&<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm"><div className="w-full max-w-sm rounded-3xl border border-white/10 bg-zinc-950 p-6 text-center shadow-2xl"><div className="text-4xl">👋</div><h2 className="mt-3 text-xl font-bold">Your partner left</h2><p className="mt-2 text-sm text-white/60">The other user has left the Watch Together room.</p><button onClick={dismissPartnerLeft} className="mt-5 w-full rounded-xl bg-white/10 py-3">Okay</button></div></div>}
+  {replyToast&&<div className="fixed left-3 right-3 top-3 z-[60] mx-auto max-w-md rounded-2xl border border-white/10 bg-zinc-950/95 p-3 shadow-2xl backdrop-blur-xl"><div className="text-xs text-pink-200">💬 Watch Together reply</div><div className="mt-1 text-sm text-white/85">{replyToast.message}</div><button onClick={()=>void dismissReply()} className="mt-2 rounded-lg bg-white/10 px-3 py-1.5 text-xs">Okay</button></div>}
   {inviteMessage&&<p className="mt-2 text-center text-sm text-white/60">{inviteMessage}</p>}
 
   <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
