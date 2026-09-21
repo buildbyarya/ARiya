@@ -12,7 +12,7 @@ model User {
   name          String?
   email         String    @unique
   emailVerified DateTime?
-  image         String?
+  image         String?    @db.Text
   nickname      String?
   gender        String?
   createdAt     DateTime  @default(now())
@@ -34,6 +34,7 @@ model User {
   chatMediaViews       ChatMediaView[]
   chatReads            ChatRead[]
   chatReactions        ChatReaction[]
+  chatPreference       ChatPreference?
 }
 
 model Home {
@@ -52,6 +53,7 @@ model Home {
   chatMessages ChatMessage[]
   chatSetting ChatSetting?
   chatReads ChatRead[]
+  chatPreferences ChatPreference[]
   calendarEvents CalendarEvent[]
   drawingSwapGame DrawingSwapGame?
 }
@@ -193,6 +195,7 @@ enum ChatMessageKind {
   TEXT
   IMAGE
   VOICE
+  VIDEO
 }
 
 model ChatMessage {
@@ -209,6 +212,10 @@ model ChatMessage {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   editedAt       DateTime?
+  fontSize       Int?
+  textColor      String?
+  fontFamily     String?
+  bubbleColor    String?
 
   home     Home         @relation(fields: [homeId], references: [id], onDelete: Cascade)
   sender   User         @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
@@ -271,6 +278,22 @@ model ChatSetting {
   updatedAt  DateTime @updatedAt
 
   home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+}
+
+model ChatPreference {
+  id         String   @id @default(cuid())
+  homeId     String
+  userId     String   @unique
+  fontSize   Int      @default(16)
+  textColor  String   @default("#ffffff")
+  fontFamily String   @default("system-ui")
+  bubbleColor String  @default("#7c3aed")
+  updatedAt  DateTime @updatedAt
+
+  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([homeId])
 }
 
 model CalendarEvent {
@@ -403,6 +426,7 @@ model WatchInvite {
   customMessage String?
   createdAt     DateTime  @default(now())
   respondedAt   DateTime?
+  replySeenAt   DateTime?
 
   home      Home      @relation(fields: [homeId], references: [id], onDelete: Cascade)
   room      WatchRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
