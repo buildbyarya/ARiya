@@ -101,6 +101,7 @@ export async function POST(request: Request) {
     if (replyToId && !(await prisma.chatMessage.findFirst({ where: { id: replyToId, homeId } }))) return NextResponse.json({ error: "Reply target not found" }, { status: 400 })
     const msg = await prisma.chatMessage.create({
       data: { homeId, senderId: c.user.id, content, kind, replyToId,
+        mediaData: kind === "TEXT" ? null : content,
         mediaMime: kind === "TEXT" ? null : String(body.mime || "application/octet-stream"),
         mediaExpiresAt: kind === "TEXT" ? null : new Date(Date.now()+86400000) },
     })
