@@ -51,6 +51,7 @@ model Home {
   watchInvites WatchInvite[]
   chatMessages ChatMessage[]
   chatSetting ChatSetting?
+  chatReads ChatRead[]
   calendarEvents CalendarEvent[]
   drawingSwapGame DrawingSwapGame?
 }
