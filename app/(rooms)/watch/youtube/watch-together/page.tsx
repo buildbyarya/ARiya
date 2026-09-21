@@ -84,7 +84,7 @@ function Page(){
    lastRemotePosition.current=Number(d.room.position);lastRemotePlaying.current=Boolean(d.room.playing)
   }
   poll();const t=setInterval(poll,700);return()=>{stop=true;clearInterval(t)}
- },[roomId,playerReady])
+ },[roomId,playerReady,replyToast?.id])
 
  useEffect(()=>{
   if(!roomId||!room?.isLeader||!playerReady)return
