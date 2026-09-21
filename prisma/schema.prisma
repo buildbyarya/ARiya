@@ -272,9 +272,7 @@ model ChatSetting {
   id         String   @id @default(cuid())
   homeId     String   @unique
   background String   @default("linear-gradient(135deg,#160b2e,#050505,#2a0a22)")
-  fontSize   Int      @default(16)
-  textColor  String   @default("#ffffff")
-  fontFamily String   @default("system-ui")
+  backgroundImage String? @db.Text
   updatedAt  DateTime @updatedAt
 
   home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
