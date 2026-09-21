@@ -25,7 +25,8 @@ export async function GET(req:Request){
  if(!room)return NextResponse.json({error:"Room not found"},{status:404})
  const me=room.members.find(m=>m.userId===c.user.id);if(!me)return NextResponse.json({error:"Not in room"},{status:403})
  await prisma.watchRoomMember.update({where:{id:me.id},data:{lastSeenAt:new Date()}})
- const leader=[...room.members].sort((a,b)=>a.joinedAt.getTime()-b.joinedAt.getTime())[0];const other=room.members.find(m=>m.userId!==c.user.id&&!m.leftAt&&m.lastSeenAt.getTime()>Date.now()-5000)
+ const leader=[...room.members].sort((a,b)=>a.joinedAt.getTime()-b.joinedAt.getTime())[0];const otherMember=room.members.find(m=>m.userId!==c.user.id);const other=otherMember&&!otherMember.leftAt&&otherMember.lastSeenAt.getTime()>Date.now()-5000?otherMember:null
+ const replyInvite=await prisma.watchInvite.findFirst({where:{roomId,senderId:c.user.id,customMessage:{not:null},replySeenAt:null},orderBy:{createdAt:"desc"}})
  if(wantsChat){
   const chat=await prisma.watchChatMessage.findMany({where:{roomId},orderBy:{createdAt:"asc"},take:100})
   return NextResponse.json({chat:chat.map(m=>{const d=decodeChat(m.content);return{id:m.id,senderId:m.senderId,senderNickname:m.senderNickname,content:d.content,reply:d.reply,createdAt:m.createdAt.toISOString()}})})
