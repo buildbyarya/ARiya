@@ -10,11 +10,6 @@ ALTER TABLE "ChatMessage"
 ALTER TABLE "ChatSetting"
   ADD COLUMN IF NOT EXISTS "backgroundImage" TEXT;
 
-ALTER TABLE "ChatSetting"
-  DROP COLUMN IF EXISTS "fontSize",
-  DROP COLUMN IF EXISTS "textColor",
-  DROP COLUMN IF EXISTS "fontFamily";
-
 CREATE TABLE IF NOT EXISTS "ChatPreference" (
   "id" TEXT NOT NULL,
   "homeId" TEXT NOT NULL,
