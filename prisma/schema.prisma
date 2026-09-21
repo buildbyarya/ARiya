@@ -32,6 +32,8 @@ model User {
   watchSetting         WatchSetting?
   sentChatMessages     ChatMessage[]      @relation("ChatMessageSender")
   chatMediaViews       ChatMediaView[]
+  chatReads            ChatRead[]
+  chatReactions        ChatReaction[]
 }
 
 model Home {
@@ -205,12 +207,14 @@ model ChatMessage {
   mediaExpiresAt DateTime?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  editedAt       DateTime?
 
   home     Home         @relation(fields: [homeId], references: [id], onDelete: Cascade)
   sender   User         @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   replyTo  ChatMessage? @relation("ChatMessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
   replies  ChatMessage[] @relation("ChatMessageReplies")
   views    ChatMediaView[]
+  reactions ChatReaction[]
 
   @@index([homeId, createdAt])
   @@index([replyToId])
@@ -227,6 +231,33 @@ model ChatMediaView {
   user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId])
+}
+
+model ChatReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+}
+
+model ChatRead {
+  id         String   @id @default(cuid())
+  homeId     String
+  userId     String
+  lastReadAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([homeId, userId])
 }
 
 model ChatSetting {
