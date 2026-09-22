@@ -61,25 +61,55 @@ function restoreSelection(){
   if(!root||!sel||!range||!root.contains(range.commonAncestorContainer))return false
   sel.removeAllRanges();sel.addRange(range);return true
 }
+function bakeCurrentTextStyle(){
+  const root=editor.current;if(!root)return
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT)
+  const nodes:Array<Text>=[]
+  let node:Node|null
+  while((node=walker.nextNode()))if((node.textContent||"").replace(/\u200b/g,""))nodes.push(node as Text)
+  for(const text of nodes){
+    let el=text.parentElement
+    while(el&&el!==root){
+      if(el.tagName==="SPAN"&&el.getAttribute("data-satella-style")==="1")break
+      el=el.parentElement
+    }
+    if(el&&el!==root){
+      if(!el.style.fontSize)el.style.fontSize=pref.fontSize+"px"
+      if(!el.style.color)el.style.color=pref.textColor
+      if(!el.style.fontFamily)el.style.fontFamily=pref.fontFamily
+      continue
+    }
+    const span=document.createElement("span")
+    span.setAttribute("data-satella-style","1")
+    span.style.fontSize=pref.fontSize+"px"
+    span.style.color=pref.textColor
+    span.style.fontFamily=pref.fontFamily
+    text.parentNode?.insertBefore(span,text)
+    span.appendChild(text)
+  }
+}
 function applyInlineStyle(property:"fontSize"|"color"|"fontFamily",value:string){
   const root=editor.current;if(!root)return;root.focus();restoreSelection()
   const sel=window.getSelection();if(!sel||!sel.rangeCount)return
-  const range=sel.getRangeAt(0);if(!root.contains(range.commonAncestorContainer))return
-  const span=document.createElement("span");span.style[property]=value
+  bakeCurrentTextStyle()
+  restoreSelection()
+  const nextSel=window.getSelection();if(!nextSel||!nextSel.rangeCount)return
+  const range=nextSel.getRangeAt(0);if(!root.contains(range.commonAncestorContainer))return
+  const span=document.createElement("span");span.setAttribute("data-satella-style","1");span.style[property]=value
   if(range.collapsed){
     span.appendChild(document.createTextNode("\u200b"));range.insertNode(span)
-    const next=document.createRange();next.setStart(span.firstChild!,1);next.collapse(true);sel.removeAllRanges();sel.addRange(next)
+    const next=document.createRange();next.setStart(span.firstChild!,1);next.collapse(true);nextSel.removeAllRanges();nextSel.addRange(next)
   }else{
     span.appendChild(range.extractContents());range.insertNode(span)
-    const next=document.createRange();next.setStartAfter(span);next.collapse(true);sel.removeAllRanges();sel.addRange(next)
+    const next=document.createRange();next.setStartAfter(span);next.collapse(true);nextSel.removeAllRanges();nextSel.addRange(next)
   }
-  savedRange.current=sel.getRangeAt(0).cloneRange()
+  savedRange.current=nextSel.getRangeAt(0).cloneRange()
 }
 function command(name:string,value?:string){editor.current?.focus();document.execCommand(name,false,value)}
  function clearEditor(){if(editor.current)editor.current.innerHTML=""}
 
  async function send(){
-   if(!editor.current)return;const content=editor.current.innerHTML.trim();if(!textFromHtml(content).trim())return
+   if(!editor.current)return;const content=editor.current.innerHTML.trim().replace(/\\u200b/g,"");if(!textFromHtml(content).trim())return
    setSending(true);await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:editing?"edit":"send",messageId:editing?.id,content,replyToId:reply?.id})})
    clearEditor();setReply(null);setEditing(null);setSending(false);void load()
  }
@@ -185,7 +215,7 @@ function command(name:string,value?:string){editor.current?.focus();document.exe
      <button onClick={()=>setShowFormat(v=>!v)} className="rounded-xl bg-white/10 px-3 py-3 font-bold">Aa</button>
      <label className="cursor-pointer rounded-xl bg-white/10 px-3 py-3">📷<input type="file" accept="image/*,video/*" className="hidden" onChange={e=>{const file=e.target.files?.[0];if(file)void fileSend(file);e.currentTarget.value=""}}/></label>
      <button onClick={()=>void startVoice()} className={"rounded-xl px-3 py-3 "+(recording?"bg-red-500/40":"bg-white/10")}>{recording?"⏹️":"🎙️"}</button>
-     <div ref={editor} contentEditable suppressContentEditableWarning data-placeholder="Type a message…" className="max-h-28 min-h-11 flex-1 overflow-y-auto rounded-xl bg-white/10 px-3 py-2.5 text-sm outline-none" style={{fontSize:pref.fontSize,fontFamily:pref.fontFamily}} onInput={rememberSelection} onKeyUp={rememberSelection} onMouseUp={rememberSelection} onBlur={rememberSelection}/>
+     <div ref={editor} contentEditable suppressContentEditableWarning data-placeholder="Type a message…" className="max-h-28 min-h-11 flex-1 overflow-y-auto rounded-xl bg-white/10 px-3 py-2.5 text-sm outline-none" onInput={rememberSelection} onKeyUp={rememberSelection} onMouseUp={rememberSelection} onBlur={rememberSelection}/>
      <button disabled={sending} onClick={()=>void send()} className="rounded-xl bg-pink-500/70 px-4 py-3 font-semibold disabled:opacity-50">➤</button>
     </div>
    </div>
