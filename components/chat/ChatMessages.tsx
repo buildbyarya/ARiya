@@ -83,7 +83,11 @@ export default function ChatMessages(){
  }
  async function act(action:string,id:string,extra:any={}){await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,messageId:id,...extra})});setMenuId(null);void load()}
  async function saveSharedBackground(){setSharedSaving(true);await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"shared-settings",backgroundImage:backgroundImage||null})});setSharedSaving(false);setShowSettings(false);void load()}
- async function saveStyle(next:Partial<Preference>){const value={...pref,...next};setPref(value);await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"style",...value}))}
+ async function saveStyle(next:Partial<Preference>){
+  const value={...pref,...next};
+  setPref(value);
+  await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"style",...value})});
+ }
 
  const pinned=useMemo(()=>messages.filter(m=>m.pinned),[messages])
  const pageBackground=setting?.backgroundImage?{backgroundImage:"url("+setting.backgroundImage+")",backgroundSize:"cover",backgroundPosition:"center"}:{background:setting?.background||"linear-gradient(135deg,#160b2e,#050505,#2a0a22)"}
