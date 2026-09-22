@@ -24,20 +24,19 @@ export default function AppShell({
       {showSiteHeader && <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />}
       {!showSiteHeader && (
         <>
-          <button
-            onClick={() => setDrawerOpen((open) => !open)}
-            className="fixed bottom-28 left-3 z-[100] rounded-2xl border border-white/10 bg-black/75 px-3 py-2.5 text-xl text-white shadow-2xl backdrop-blur-xl sm:bottom-6 sm:left-4 sm:px-4 sm:py-3 sm:text-2xl"
-            aria-label={drawerOpen ? "Close navigation" : "Open navigation"}
-          >
-            {drawerOpen ? "✕" : "≡"}
-          </button>
-          <div className="fixed bottom-28 right-3 z-[100] rounded-2xl border border-white/10 bg-black/75 p-1.5 shadow-2xl backdrop-blur-xl sm:bottom-6 sm:right-4 sm:p-2">
-            <NotificationsBell />
+          <div className="fixed inset-x-0 top-0 z-[100] border-b border-white/10 bg-black/80 backdrop-blur-xl">
+            <div className="mx-auto flex h-12 max-w-6xl items-center justify-between px-3">
+              <button onClick={() => setDrawerOpen((open) => !open)} className="rounded-xl px-3 py-1.5 text-xl text-white transition hover:bg-white/10 active:scale-95" aria-label={drawerOpen ? "Close navigation" : "Open navigation"}>
+                {drawerOpen ? "✕" : "≡"}
+              </button>
+              <div className="rounded-xl px-3 py-1 text-xs font-medium text-white/50">Satella</div>
+              <div className="rounded-xl p-0.5"><NotificationsBell /></div>
+            </div>
           </div>
           <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
         </>
       )}
-      {children}
+      <div className={showSiteHeader ? "" : "pt-12"}>{children}</div>
     </>
   )
 }

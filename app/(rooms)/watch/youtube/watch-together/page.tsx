@@ -32,25 +32,25 @@ function Page(){
  }
 
  useEffect(()=>{
-  if(!room?.id)return
   let cancelled=false
+  let pollTimer:any=null
+  let bootTimer:any=null
   const make=()=>{
    if(cancelled||!window.YT?.Player||player.current)return
    const el=document.getElementById("wt-player");if(!el)return
-   player.current=new window.YT.Player(el,{videoId:room.videoId,playerVars:{playsinline:1,controls:1,rel:0,origin:window.location.origin},events:{
-    onReady:(event:any)=>{try{event.target.cueVideoById({videoId:room.videoId,startSeconds:Number(room.position||0)})}catch{};setPlayerReady(true);initialized.current=false},
+   player.current=new window.YT.Player(el,{videoId:"",playerVars:{playsinline:1,controls:1,rel:0,enablejsapi:1,origin:window.location.origin},events:{
+    onReady:()=>{setPlayerReady(true);initialized.current=false},
     onStateChange:()=>{if(initialized.current&&!suppress.current)void sync(true)},
     onPlaybackRateChange:()=>{if(initialized.current&&!suppress.current)void sync(true)},
-    onError:(e:any)=>{console.error(e);setPlayerError("YouTube could not load this video.")}
+    onError:(e:any)=>{console.error("Watch Together YouTube player error",e);setPlayerError("YouTube could not load this video. Please try another video.")}
    }})
   }
-  if(window.YT?.Player)make();else{
-   const prev=window.onYouTubeIframeAPIReady
-   window.onYouTubeIframeAPIReady=()=>{prev?.();make()}
-   if(!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')){const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";document.body.appendChild(s)}
-  }
-  return()=>{cancelled=true;player.current?.destroy?.();player.current=null;setPlayerReady(false);initialized.current=false}
- },[Boolean(room?.id)])
+  const waitForApi=()=>{if(cancelled)return;if(window.YT?.Player){make();return}pollTimer=setTimeout(waitForApi,250)}
+  waitForApi()
+  if(!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')){const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";document.body.appendChild(s)}
+  bootTimer=setTimeout(()=>{if(!cancelled&&!player.current&&!playerReady)setPlayerError("YouTube player is taking too long to load. Refresh once and try again.")},10000)
+  return()=>{cancelled=true;clearTimeout(pollTimer);clearTimeout(bootTimer);player.current?.destroy?.();player.current=null;setPlayerReady(false);initialized.current=false}
+ },[])
 
  function applyRemote(r:any,initial=false){
   if(!player.current)return
@@ -123,7 +123,7 @@ function Page(){
  async function dismissReply(){if(replyToast)await api({action:"dismiss-reply",inviteId:replyToast.id});setReplyToast(null)}
  function dismissPartnerLeft(){setPartnerLeft(false)}
  async function previewPaste(){const id=extractId(paste);if(!id){setSearchMessage("That does not look like a valid YouTube link.");return}setSearching(true);setSearchMessage("");try{const r=await fetch("/api/youtube/videos?ids="+encodeURIComponent(id),{cache:"no-store"});const d=await r.json();const v=Array.isArray(d)?d[0]:d;if(v){setSearchResults([v])}else{setSearchResults([{id,title:"YouTube video",thumbnail:"https://i.ytimg.com/vi/"+id+"/hqdefault.jpg",channel:"YouTube"}])}setSelected("search");setSourcesOpen(true)}finally{setSearching(false)}}
- async function leave(){await api({action:"leave",roomId});router.push("/watch/youtube")}
+ async function leave(){await api({action:"leave",roomId});router.replace("/watch/youtube")}
  const displayed=selected==="liked"?liked:selected==="watchLater"?watchLater:playlistVideos
 
  if(!room)return <main className="min-h-screen bg-black text-white flex items-center justify-center">Joining Watch Together…</main>

@@ -13,7 +13,7 @@ export async function GET(){
   prisma.watchInvite.findMany({where:{senderId:u.id,status:"PENDING",customMessage:{not:null},createdAt:{gt:since}},include:{recipient:true},orderBy:{createdAt:"desc"}})
  ])
  return NextResponse.json({
-  notifications:incoming.map(i=>({id:i.id,text:(i.sender.nickname||i.sender.name||"Someone")+" invited you to watch YouTube",customMessage:i.customMessage,expiresAt:i.expiresAt.toISOString()})),
+  notifications:incoming.map(i=>({id:i.id,text:(i.sender.nickname||i.sender.name||"Someone")+" invited you to watch YouTube",customMessage:i.customMessage,createdAt:i.createdAt.toISOString(),expiresAt:i.expiresAt.toISOString()})),
   events:[
    ...responded.map(i=>({id:(i.status==="ACCEPTED"?"accepted-":"declined-")+i.id,text:(i.recipient.nickname||i.recipient.name||"Your partner")+(i.status==="ACCEPTED"?" accepted your Watch Together invitation. They are watching with you now.":" declined your Watch Together invitation."),kind:i.status==="ACCEPTED"?"accepted":"declined"})),
    ...replies.map(i=>({id:"reply-"+i.id+"-"+i.customMessage,text:(i.recipient.nickname||i.recipient.name||"Your partner")+" replied: "+i.customMessage,kind:"reply"}))

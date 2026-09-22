@@ -11,6 +11,7 @@ async function ctx(){
  return membership?{user,membership}:null
 }
 const num=(v:any,f:number)=>{const n=Number(v);return Number.isFinite(n)?n:f}
+async function inviteCount(senderId:string,recipientId:string){const since=new Date(Date.now()-60*60*1000);return prisma.watchInvite.count({where:{senderId,recipientId,createdAt:{gte:since}}})}
 function decodeChat(content:string){try{const p=JSON.parse(content);if(p&&typeof p.text==="string")return{content:p.text,reply:p.reply??null}}catch{}return{content,reply:null}}
 function encodeChat(content:string,reply:any){return reply?JSON.stringify({text:content,reply:{id:reply.id,senderNickname:reply.senderNickname,content:reply.content.slice(0,240)}}):content}
 
@@ -60,6 +61,7 @@ export async function POST(req:Request){
     const room=await prisma.watchRoom.findFirst({where:{id:String(b.roomId),homeId:c.membership.home.id},include:{members:true}})
     if(!room||!room.members.some(m=>m.userId===c.user.id&&!m.leftAt))return NextResponse.json({error:"You are not an active member of this room."},{status:403})
     const other=c.membership.home.members.find(m=>m.userId!==c.user.id);if(!other)return NextResponse.json({error:"No partner is connected to your Satella home."},{status:400})
+    if(await inviteCount(c.user.id,other.userId)>=3)return NextResponse.json({error:"Watch Together invites are limited to 3 per hour. Try again later."},{status:429})
     let setting;try{setting=await prisma.watchSetting.upsert({where:{userId:c.user.id},create:{userId:c.user.id},update:{}})}catch{return NextResponse.json({error:"Could not access Watch Together settings."},{status:500})}
     const mins=[2,5,10,15].includes(setting.expiryMinutes)?setting.expiryMinutes:10
     const invite=await prisma.watchInvite.create({data:{homeId:room.homeId,roomId:room.id,senderId:c.user.id,recipientId:other.userId,videoId:room.videoId,position:room.position,expiresAt:new Date(now.getTime()+mins*60000)}})
@@ -67,6 +69,7 @@ export async function POST(req:Request){
    }
    const videoId=String(b.videoId||"").trim();if(!videoId)return NextResponse.json({error:"No YouTube video was selected."},{status:400})
    const other=c.membership.home.members.find(m=>m.userId!==c.user.id);if(!other)return NextResponse.json({error:"No partner is connected to your Satella home."},{status:400})
+   if(await inviteCount(c.user.id,other.userId)>=3)return NextResponse.json({error:"Watch Together invites are limited to 3 per hour. Try again later."},{status:429})
    let setting;try{setting=await prisma.watchSetting.upsert({where:{userId:c.user.id},create:{userId:c.user.id},update:{}})}catch(e){console.error(e);return NextResponse.json({error:"Could not access Watch Together settings."},{status:500})}
    const mins=[2,5,10,15].includes(setting.expiryMinutes)?setting.expiryMinutes:10
    const room=await prisma.watchRoom.create({data:{homeId:c.membership.home.id,videoId,position:num(b.position,0),playing:Boolean(b.playing),volume:Math.max(0,Math.min(100,num(b.volume,100))),playbackRate:Math.max(.25,Math.min(2,num(b.playbackRate,1)))}})

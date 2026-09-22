@@ -4,13 +4,18 @@ import {createPortal} from "react-dom"
 import {useRouter} from "next/navigation"
 
 export default function NotificationsBell(){
- const[a,setA]=useState<any[]>([]);const[events,setEvents]=useState<any[]>([]);const[open,setOpen]=useState(false);const[reply,setReply]=useState<{id:string;text:string}|null>(null);const[toast,setToast]=useState<any>(null);const[seen]=useState(()=>new Set<string>());const router=useRouter()
+ const[a,setA]=useState<any[]>([]);const[events,setEvents]=useState<any[]>([]);const[open,setOpen]=useState(false);const[reply,setReply]=useState<{id:string;text:string}|null>(null);const[toast,setToast]=useState<any>(null);const router=useRouter()
+ const toastKey="satella-watch-invite-toasts-v1"
+ function getToastHistory(){try{const raw=JSON.parse(localStorage.getItem(toastKey)||"[]");const cutoff=Date.now()-60*60*1000;return Array.isArray(raw)?raw.filter((x:any)=>x&&Number(x.at)>cutoff):[]}catch{return[]}}
+ function rememberToast(id:string){try{const next=[...getToastHistory(),{id,at:Date.now()}].slice(-3);localStorage.setItem(toastKey,JSON.stringify(next))}catch{}}
  async function load(){
   const r=await fetch("/api/notifications",{cache:"no-store"});if(!r.ok)return
   const d=await r.json();setA(d.notifications||[]);setEvents(d.events||[])
-  const fresh=(d.notifications||[]).map((x:any)=>({...x,type:"invite"})).filter((x:any)=>!seen.has(x.id))
-  fresh.forEach((x:any)=>seen.add(x.id))
-  if(fresh.length)setToast(fresh[0])
+  const history=getToastHistory()
+  const recent=(d.notifications||[]).map((x:any)=>({...x,type:"invite"})).filter((x:any)=>!x.createdAt||Date.now()-Date.parse(x.createdAt)<60*60*1000)
+  const shown=new Set(history.map((x:any)=>x.id))
+  const fresh=recent.filter((x:any)=>!shown.has(x.id))
+  if(fresh.length&&history.length<3){setToast(fresh[0]);rememberToast(fresh[0].id)}
  }
  useEffect(()=>{void load();const t=setInterval(load,1500);return()=>clearInterval(t)},[])
  async function respond(id:string,x:string,msg?:string){

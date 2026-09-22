@@ -63,7 +63,7 @@ function YouTubeContent() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-purple-950 via-black to-pink-950 p-6">
       <div className="mx-auto max-w-md">
-        <PageHeader title="🎬 YouTube" />
+        <PageHeader title="🎬 YouTube" backHref="/home" />
 
         <div className="mt-6 flex gap-3">
           <input
