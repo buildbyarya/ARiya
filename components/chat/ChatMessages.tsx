@@ -212,7 +212,7 @@ function command(name:string,value?:string){editor.current?.focus();document.exe
           <input type="color" value={pref.bubbleColor} onChange={e=>void saveStyle({bubbleColor:e.target.value})} title="Message bubble color" className="h-7 w-8 rounded"/>
           <span>Color</span>
         </span>
-        <button type="button" onClick={()=>void saveStyle({bubbleColor:"#7c3aed"})} className="rounded-md bg-black/10 px-2 py-1 text-[11px] hover:bg-black/15">↩ Default</button>
+        <button type="button" onClick={()=>void saveStyle({fontSize:16,textColor:"#fff",bubbleColor:"#7c3aed"})} className="rounded-md bg-black/10 px-2 py-1 text-[11px] hover:bg-black/15">↩ Default style</button>
       </label>
     </div><p className="mt-1 px-1 text-[10px] text-black/45">Text size/color/font apply to the text you type next. Bubble color applies to your whole message bubble. Your partner can choose their own.</p></div>}
     <div className="flex items-end gap-1.5">
