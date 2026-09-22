@@ -26,12 +26,12 @@ export default function AppShell({
         <>
           <button
             onClick={() => setDrawerOpen((open) => !open)}
-            className="fixed bottom-4 left-4 z-[100] rounded-2xl border border-white/10 bg-black/75 px-4 py-3 text-2xl text-white shadow-2xl backdrop-blur-xl"
+            className="fixed bottom-28 left-3 z-[100] rounded-2xl border border-white/10 bg-black/75 px-3 py-2.5 text-xl text-white shadow-2xl backdrop-blur-xl sm:bottom-6 sm:left-4 sm:px-4 sm:py-3 sm:text-2xl"
             aria-label={drawerOpen ? "Close navigation" : "Open navigation"}
           >
             {drawerOpen ? "✕" : "≡"}
           </button>
-          <div className="fixed bottom-4 right-4 z-[100] rounded-2xl border border-white/10 bg-black/75 p-2 shadow-2xl backdrop-blur-xl">
+          <div className="fixed bottom-28 right-3 z-[100] rounded-2xl border border-white/10 bg-black/75 p-1.5 shadow-2xl backdrop-blur-xl sm:bottom-6 sm:right-4 sm:p-2">
             <NotificationsBell />
           </div>
           <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
