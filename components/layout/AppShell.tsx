@@ -14,6 +14,7 @@ export default function AppShell({
   const [drawerOpen, setDrawerOpen] = useState(false)
   const pathname = usePathname()
   const showSiteHeader = pathname === "/home"
+  const pageTitle = pathname === "/home" ? "Satella" : pathname.startsWith("/chat") ? "Chats" : pathname.includes("/watch-together") ? "Watch Together" : pathname.startsWith("/watch") ? "Watch" : "Satella"
 
   return (
     <>
@@ -29,7 +30,7 @@ export default function AppShell({
               <button onClick={() => setDrawerOpen((open) => !open)} className="rounded-xl px-3 py-1.5 text-xl text-white transition hover:bg-white/10 active:scale-95" aria-label={drawerOpen ? "Close navigation" : "Open navigation"}>
                 {drawerOpen ? "✕" : "≡"}
               </button>
-              <div className="rounded-xl px-3 py-1 text-xs font-medium text-white/50">Satella</div>
+              <div className="rounded-xl px-3 py-1 text-xs font-medium text-white/75">{pageTitle}</div>
               <div className="rounded-xl p-0.5"><NotificationsBell /></div>
             </div>
           </div>

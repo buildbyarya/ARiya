@@ -150,7 +150,7 @@ function command(name:string,value?:string){editor.current?.focus();document.exe
 
  return <main className="min-h-screen text-white" style={pageBackground}>
   <div className="min-h-screen bg-black/35"><div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col">
-   <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-black/70 px-3 py-2 backdrop-blur-xl">
+   <header className="fixed left-0 right-0 top-12 z-40 border-b border-white/10 bg-black/70 px-3 py-2 backdrop-blur-xl">
     <div className="flex items-center gap-2">
      <a href="/home" className="rounded-xl bg-white/10 px-3 py-2">‹</a><div className="min-w-0 flex-1"><div className="font-bold">💬 Our Chat</div><div className="text-[11px] text-white/45">Shared space</div></div>
      
@@ -166,7 +166,7 @@ function command(name:string,value?:string){editor.current?.focus();document.exe
 
    {showPinned&&<div className="border-b border-white/10 bg-black/45 p-3"><div className="mb-2 text-sm font-semibold">Pinned messages</div>{pinned.length?<div className="space-y-1.5">{pinned.map(m=><button key={m.id} onClick={()=>jump(m.id)} className="block w-full rounded-xl bg-white/10 p-2 text-left text-sm">{textFromHtml(m.content).slice(0,120)}</button>)}</div>:<div className="text-sm text-white/40">Nothing pinned yet.</div>}</div>}
 
-   <div ref={list} className="flex-1 overflow-y-auto px-2 pb-3 pt-28 sm:px-4"><div className="space-y-2.5">
+   <div ref={list} className="flex-1 overflow-y-auto px-2 pb-3 pt-40 sm:px-4"><div className="space-y-2.5">
     {messages.map(m=>{
       const own=m.senderId===currentUserId,bubble=m.style?.bubbleColor||(own?pref.bubbleColor:"#27272a"),dotsColor=contrastColor(bubble),match=search?results.some(x=>x.m.id===m.id):false
       return <div id={"msg-"+m.id} key={m.id} className={"flex "+(own?"justify-end":"justify-start")+" "+(match?"rounded-xl ring-1 ring-yellow-300/40":"")}>
@@ -176,8 +176,8 @@ function command(name:string,value?:string){editor.current?.focus();document.exe
          {m.replyTo&&<button onClick={()=>jump(m.replyTo.id)} className="mb-1.5 w-full rounded-xl border-l-2 border-white/45 bg-black/20 px-2 py-1.5 text-left text-xs"><b>{m.replyTo.senderName}</b><div className="truncate opacity-65">{textFromHtml(m.replyTo.content)}</div></button>}
          {m.kind==="TEXT"?<div className="break-words whitespace-pre-wrap [&_a]:underline" dangerouslySetInnerHTML={{__html:m.content}}/>:<button onClick={()=>void openMedia(m)} disabled={openingMedia===m.id||m.media?.remaining<=0} className="flex min-w-44 items-center gap-2 text-left disabled:opacity-50"><span className="text-xl">{health(m.media?.remaining||0)}</span><span><b>{m.kind==="IMAGE"?"🖼️ Temporary image":m.kind==="VIDEO"?"🎬 Temporary video":"🎙️ Voice message"}</b><span className="block text-xs opacity-65">{openingMedia===m.id?"Opening…":m.media?.remaining?m.media.remaining+" views left":"Used / expired"}</span></span></button>}
          <div className="mt-1 flex items-center justify-end gap-1 text-[9px] opacity-55">{formatTime(m.createdAt)}{m.editedAt?" · edited":""}{own?" · "+(m.seenByPartner?"Seen":"Sent"):""}</div>
-         <button onClick={()=>setMenuId(menuId===m.id?null:m.id)} aria-label="Message actions" className="absolute -top-2 flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-black/80 shadow" style={{color:dotsColor}}>⋯</button>
-         {menuId===m.id&&<div className={"absolute z-20 top-6 "+(own?"left-0":"right-0")+" min-w-40 rounded-xl border border-white/10 bg-zinc-950 p-1 shadow-2xl"}>
+         <button onClick={()=>setMenuId(menuId===m.id?null:m.id)} aria-label="Message actions" className="absolute -top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-black/80 shadow" style={{color:dotsColor}}>⋯</button>
+         {menuId===m.id&&<div className={"absolute z-20 top-6 right-0 min-w-40 rounded-xl border border-white/10 bg-zinc-950 p-1 shadow-2xl"}>
           <button onClick={()=>{setReply(m);setMenuId(null)}} className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-white/10">↩ Reply</button>
           <button onClick={()=>void act("pin",m.id)} className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-white/10">{m.pinned?"📌 Unpin":"📌 Pin"}</button>
           {m.kind==="TEXT"&&<button onClick={()=>{setEditing(m);if(editor.current)editor.current.innerHTML=m.content;setMenuId(null)}} className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-white/10">✏️ Edit</button>}

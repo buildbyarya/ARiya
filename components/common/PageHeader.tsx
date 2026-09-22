@@ -23,7 +23,7 @@ export default function PageHeader({
 
     if(backHref){
 
-      router.push(backHref)
+      router.replace(backHref)
 
     } else {
 
