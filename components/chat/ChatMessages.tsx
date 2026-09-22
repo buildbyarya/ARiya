@@ -207,8 +207,12 @@ function command(name:string,value?:string){editor.current?.focus();document.exe
       <label className="flex items-center gap-1 rounded-lg bg-black/5 px-2 py-1.5 text-xs">Font
         <select value={pref.fontFamily} onMouseDown={rememberSelection} onChange={e=>{void saveStyle({fontFamily:e.target.value});applyInlineStyle("fontFamily",e.target.value)}} className="max-w-24 bg-transparent px-1 py-1 text-sm"><option value="system-ui">System</option><option value="Georgia">Serif</option><option value="monospace">Mono</option><option value="Arial">Arial</option><option value="Trebuchet MS">Trebuchet</option></select>
       </label>
-      <label className="flex items-center gap-1 rounded-lg bg-black/5 px-2 py-1.5 text-xs">Bubble
-        <input type="color" value={pref.bubbleColor} onChange={e=>void saveStyle({bubbleColor:e.target.value})} title="Message bubble color" className="h-7 w-8 rounded"/>
+      <label className="flex flex-col gap-1 rounded-lg bg-black/5 px-2 py-1.5 text-xs">Bubble
+        <span className="flex items-center gap-1">
+          <input type="color" value={pref.bubbleColor} onChange={e=>void saveStyle({bubbleColor:e.target.value})} title="Message bubble color" className="h-7 w-8 rounded"/>
+          <span>Color</span>
+        </span>
+        <button type="button" onClick={()=>void saveStyle({bubbleColor:"#7c3aed"})} className="rounded-md bg-black/10 px-2 py-1 text-[11px] hover:bg-black/15">↩ Default</button>
       </label>
     </div><p className="mt-1 px-1 text-[10px] text-black/45">Text size/color/font apply to the text you type next. Bubble color applies to your whole message bubble. Your partner can choose their own.</p></div>}
     <div className="flex items-end gap-1.5">
