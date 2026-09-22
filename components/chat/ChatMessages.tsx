@@ -30,7 +30,7 @@ export default function ChatMessages(){
  const [openingMedia,setOpeningMedia]=useState<string|null>(null)
  const [mediaView,setMediaView]=useState<{kind:string;data:string;mime:string}|null>(null)
  const [backgroundImage,setBackgroundImage]=useState(""),[sharedSaving,setSharedSaving]=useState(false)
- const editor=useRef<HTMLDivElement>(null),list=useRef<HTMLDivElement>(null),recorder=useRef<MediaRecorder|null>(null),chunks=useRef<Blob[]>([])
+ const editor=useRef<HTMLDivElement>(null),list=useRef<HTMLDivElement>(null),recorder=useRef<MediaRecorder|null>(null),chunks=useRef<Blob[]>([]),savedRange=useRef<Range|null>(null)
 
  async function load(){
    const r=await fetch("/api/chat",{cache:"no-store"});if(!r.ok)return
@@ -50,8 +50,19 @@ export default function ChatMessages(){
  function performSearch(){setSearch(searchDraft.trim());setSearchIndex(0)}
 function jump(id:string){const el=document.getElementById("msg-"+id);el?.scrollIntoView({behavior:"smooth",block:"center"});el?.classList.add("ring-2","ring-pink-300");setTimeout(()=>el?.classList.remove("ring-2","ring-pink-300"),1100)}
  function jumpSearch(delta:number){if(!results.length)return;const next=(searchIndex+delta+results.length)%results.length;setSearchIndex(next);jump(results[next].m.id)}
- function applyInlineStyle(property:"fontSize"|"color"|"fontFamily",value:string){
-  const root=editor.current;if(!root)return;root.focus()
+ function rememberSelection(){
+  const root=editor.current,sel=window.getSelection()
+  if(!root||!sel||!sel.rangeCount)return
+  const range=sel.getRangeAt(0)
+  if(root.contains(range.commonAncestorContainer))savedRange.current=range.cloneRange()
+}
+function restoreSelection(){
+  const root=editor.current,sel=window.getSelection(),range=savedRange.current
+  if(!root||!sel||!range||!root.contains(range.commonAncestorContainer))return false
+  sel.removeAllRanges();sel.addRange(range);return true
+}
+function applyInlineStyle(property:"fontSize"|"color"|"fontFamily",value:string){
+  const root=editor.current;if(!root)return;root.focus();restoreSelection()
   const sel=window.getSelection();if(!sel||!sel.rangeCount)return
   const range=sel.getRangeAt(0);if(!root.contains(range.commonAncestorContainer))return
   const span=document.createElement("span");span.style[property]=value
@@ -62,6 +73,7 @@ function jump(id:string){const el=document.getElementById("msg-"+id);el?.scrollI
     span.appendChild(range.extractContents());range.insertNode(span)
     const next=document.createRange();next.setStartAfter(span);next.collapse(true);sel.removeAllRanges();sel.addRange(next)
   }
+  savedRange.current=sel.getRangeAt(0).cloneRange()
 }
 function command(name:string,value?:string){editor.current?.focus();document.execCommand(name,false,value)}
  function clearEditor(){if(editor.current)editor.current.innerHTML=""}
@@ -156,16 +168,24 @@ function command(name:string,value?:string){editor.current?.focus();document.exe
     {editing&&<div className="mb-2 flex items-center justify-between rounded-xl bg-pink-500/10 px-3 py-2 text-xs">Editing message<button onClick={()=>{setEditing(null);clearEditor()}}>Cancel</button></div>}
     {showFormat&&<div className="mb-2 rounded-2xl bg-zinc-50 p-2 text-black shadow-xl"><div className="flex flex-wrap gap-1">
       <button onClick={()=>command("bold")} className="rounded-lg px-3 py-2 font-bold">B</button><button onClick={()=>command("italic")} className="rounded-lg px-3 py-2 italic">I</button><button onClick={()=>command("underline")} className="rounded-lg px-3 py-2 underline">U</button><button onClick={()=>command("strikeThrough")} className="rounded-lg px-3 py-2">S̶</button>
-      <select value={pref.fontSize} onChange={e=>{const v=Number(e.target.value);void saveStyle({fontSize:v});applyInlineStyle("fontSize",v+"px")}} className="rounded-lg bg-black/5 px-2 py-2 text-sm">{Array.from({length:23},(_,i)=>i+10).map(v=><option key={v} value={v}>{v}px</option>)}</select>
-      <input type="color" value={pref.textColor} onChange={e=>{void saveStyle({textColor:e.target.value});applyInlineStyle("color",e.target.value)}} title="Text color" className="h-9 w-10 rounded-lg"/>
-      <select value={pref.fontFamily} onChange={e=>{void saveStyle({fontFamily:e.target.value});applyInlineStyle("fontFamily",e.target.value)}} className="max-w-28 rounded-lg bg-black/5 px-2 py-2 text-sm"><option value="system-ui">System</option><option value="Georgia">Serif</option><option value="monospace">Mono</option><option value="Arial">Arial</option><option value="Trebuchet MS">Trebuchet</option></select>
-      <input type="color" value={pref.bubbleColor} onChange={e=>void saveStyle({bubbleColor:e.target.value})} title="My message bubble" className="h-9 w-10 rounded-lg"/>
-    </div><p className="mt-1 px-1 text-[10px] text-black/45">Style changes affect only your new messages. Your partner can choose their own.</p></div>}
+      <label className="flex items-center gap-1 rounded-lg bg-black/5 px-2 py-1.5 text-xs">Size
+        <select value={pref.fontSize} onMouseDown={rememberSelection} onChange={e=>{const v=Number(e.target.value);void saveStyle({fontSize:v});applyInlineStyle("fontSize",v+"px")}} className="bg-transparent px-1 py-1 text-sm"><option value={10}>10px</option>{Array.from({length:22},(_,i)=>i+11).map(v=><option key={v} value={v}>{v}px</option>)}</select>
+      </label>
+      <label className="flex items-center gap-1 rounded-lg bg-black/5 px-2 py-1.5 text-xs">Text
+        <input type="color" value={pref.textColor} onMouseDown={rememberSelection} onChange={e=>{void saveStyle({textColor:e.target.value});applyInlineStyle("color",e.target.value)}} title="Text color" className="h-7 w-8 rounded"/>
+      </label>
+      <label className="flex items-center gap-1 rounded-lg bg-black/5 px-2 py-1.5 text-xs">Font
+        <select value={pref.fontFamily} onMouseDown={rememberSelection} onChange={e=>{void saveStyle({fontFamily:e.target.value});applyInlineStyle("fontFamily",e.target.value)}} className="max-w-24 bg-transparent px-1 py-1 text-sm"><option value="system-ui">System</option><option value="Georgia">Serif</option><option value="monospace">Mono</option><option value="Arial">Arial</option><option value="Trebuchet MS">Trebuchet</option></select>
+      </label>
+      <label className="flex items-center gap-1 rounded-lg bg-black/5 px-2 py-1.5 text-xs">Bubble
+        <input type="color" value={pref.bubbleColor} onChange={e=>void saveStyle({bubbleColor:e.target.value})} title="Message bubble color" className="h-7 w-8 rounded"/>
+      </label>
+    </div><p className="mt-1 px-1 text-[10px] text-black/45">Text size/color/font apply to the text you type next. Bubble color applies to your whole message bubble. Your partner can choose their own.</p></div>}
     <div className="flex items-end gap-1.5">
      <button onClick={()=>setShowFormat(v=>!v)} className="rounded-xl bg-white/10 px-3 py-3 font-bold">Aa</button>
      <label className="cursor-pointer rounded-xl bg-white/10 px-3 py-3">📷<input type="file" accept="image/*,video/*" className="hidden" onChange={e=>{const file=e.target.files?.[0];if(file)void fileSend(file);e.currentTarget.value=""}}/></label>
      <button onClick={()=>void startVoice()} className={"rounded-xl px-3 py-3 "+(recording?"bg-red-500/40":"bg-white/10")}>{recording?"⏹️":"🎙️"}</button>
-     <div ref={editor} contentEditable suppressContentEditableWarning data-placeholder="Type a message…" className="max-h-28 min-h-11 flex-1 overflow-y-auto rounded-xl bg-white/10 px-3 py-2.5 text-sm outline-none" style={{fontSize:pref.fontSize,fontFamily:pref.fontFamily,color:pref.textColor}}/>
+     <div ref={editor} contentEditable suppressContentEditableWarning data-placeholder="Type a message…" className="max-h-28 min-h-11 flex-1 overflow-y-auto rounded-xl bg-white/10 px-3 py-2.5 text-sm outline-none" style={{fontSize:pref.fontSize,fontFamily:pref.fontFamily}} onInput={rememberSelection} onKeyUp={rememberSelection} onMouseUp={rememberSelection} onBlur={rememberSelection}/>
      <button disabled={sending} onClick={()=>void send()} className="rounded-xl bg-pink-500/70 px-4 py-3 font-semibold disabled:opacity-50">➤</button>
     </div>
    </div>
