@@ -24,7 +24,7 @@ export default function ChatMessages(){
  const [setting,setSetting]=useState<Setting|null>(null)
  const [pref,setPref]=useState<Preference>({fontSize:16,textColor:"#fff",fontFamily:"system-ui",bubbleColor:"#7c3aed"})
  const [reply,setReply]=useState<Message|null>(null),[editing,setEditing]=useState<Message|null>(null)
- const [search,setSearch]=useState(""),[searchIndex,setSearchIndex]=useState(0)
+ const [searchDraft,setSearchDraft]=useState(""),[search,setSearch]=useState(""),[searchIndex,setSearchIndex]=useState(0)
  const [showPinned,setShowPinned]=useState(false),[showSettings,setShowSettings]=useState(false),[showFormat,setShowFormat]=useState(false)
  const [sending,setSending]=useState(false),[recording,setRecording]=useState(false),[menuId,setMenuId]=useState<string|null>(null)
  const [openingMedia,setOpeningMedia]=useState<string|null>(null)
@@ -43,13 +43,27 @@ export default function ChatMessages(){
 
  const results=useMemo(()=>{
    const q=search.trim().toLowerCase();if(!q)return []
-   return messages.map((m,i)=>({m,i,text:textFromHtml(m.content).toLowerCase()})).filter(x=>x.text.includes(q))
+   return messages.filter(m=>m.kind==="TEXT").map((m,i)=>({m,i,text:textFromHtml(m.content).toLowerCase()})).filter(x=>x.text.includes(q))
  },[messages,search])
  useEffect(()=>{if(!search){setSearchIndex(0);return}if(results.length)setSearchIndex(results.length-1)},[search,results.length])
 
- function jump(id:string){const el=document.getElementById("msg-"+id);el?.scrollIntoView({behavior:"smooth",block:"center"});el?.classList.add("ring-2","ring-pink-300");setTimeout(()=>el?.classList.remove("ring-2","ring-pink-300"),1100)}
+ function performSearch(){setSearch(searchDraft.trim());setSearchIndex(0)}
+function jump(id:string){const el=document.getElementById("msg-"+id);el?.scrollIntoView({behavior:"smooth",block:"center"});el?.classList.add("ring-2","ring-pink-300");setTimeout(()=>el?.classList.remove("ring-2","ring-pink-300"),1100)}
  function jumpSearch(delta:number){if(!results.length)return;const next=(searchIndex+delta+results.length)%results.length;setSearchIndex(next);jump(results[next].m.id)}
- function command(name:string,value?:string){editor.current?.focus();document.execCommand(name,false,value)}
+ function applyInlineStyle(property:"fontSize"|"color"|"fontFamily",value:string){
+  const root=editor.current;if(!root)return;root.focus()
+  const sel=window.getSelection();if(!sel||!sel.rangeCount)return
+  const range=sel.getRangeAt(0);if(!root.contains(range.commonAncestorContainer))return
+  const span=document.createElement("span");span.style[property]=value
+  if(range.collapsed){
+    span.appendChild(document.createTextNode("\u200b"));range.insertNode(span)
+    const next=document.createRange();next.setStart(span.firstChild!,1);next.collapse(true);sel.removeAllRanges();sel.addRange(next)
+  }else{
+    span.appendChild(range.extractContents());range.insertNode(span)
+    const next=document.createRange();next.setStartAfter(span);next.collapse(true);sel.removeAllRanges();sel.addRange(next)
+  }
+}
+function command(name:string,value?:string){editor.current?.focus();document.execCommand(name,false,value)}
  function clearEditor(){if(editor.current)editor.current.innerHTML=""}
 
  async function send(){
@@ -94,18 +108,23 @@ export default function ChatMessages(){
 
  return <main className="min-h-screen text-white" style={pageBackground}>
   <div className="min-h-screen bg-black/35"><div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col">
-   <header className="sticky top-0 z-30 border-b border-white/10 bg-black/55 px-3 py-2 backdrop-blur-xl">
+   <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-black/70 px-3 py-2 backdrop-blur-xl">
     <div className="flex items-center gap-2">
      <a href="/home" className="rounded-xl bg-white/10 px-3 py-2">‹</a><div className="min-w-0 flex-1"><div className="font-bold">💬 Our Chat</div><div className="text-[11px] text-white/45">Shared space</div></div>
-     {search&&<div className="flex items-center gap-1 text-xs text-white/60">{results.length?searchIndex+1:0}/{results.length}<button onClick={()=>jumpSearch(-1)} className="rounded-lg bg-white/10 px-2 py-1">↑</button><button onClick={()=>jumpSearch(1)} className="rounded-lg bg-white/10 px-2 py-1">↓</button></div>}
+     
      <button onClick={()=>setShowPinned(v=>!v)} className="rounded-xl bg-white/10 px-2.5 py-2">📌</button><button onClick={()=>setShowSettings(true)} className="rounded-xl bg-white/10 px-2.5 py-2">🎨</button>
     </div>
-    <div className="mt-2 flex gap-2"><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search chat…" className="min-w-0 flex-1 rounded-xl bg-white/10 px-3 py-2 text-sm outline-none"/>{search&&<button onClick={()=>setSearch("")} className="rounded-xl bg-white/10 px-3">×</button>}</div>
+    <div className="mt-2 flex gap-1.5">
+      <input value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")performSearch()}} placeholder="Search chat…" className="min-w-0 flex-1 rounded-xl bg-white/10 px-3 py-2 text-sm outline-none"/>
+      <button onClick={()=>jumpSearch(-1)} disabled={!results.length} className="rounded-xl bg-white/10 px-3 disabled:opacity-30" aria-label="Older search result">↑</button>
+      <button onClick={()=>jumpSearch(1)} disabled={!results.length} className="rounded-xl bg-white/10 px-3 disabled:opacity-30" aria-label="Newer search result">↓</button>
+      <button onClick={performSearch} className="rounded-xl bg-white/10 px-3" aria-label="Search">🔎</button>
+    </div>{search&&<div className="mt-1 px-1 text-[10px] text-white/45">{results.length?`Match ${searchIndex+1} of ${results.length}`:`No text messages found`}</div>}
    </header>
 
    {showPinned&&<div className="border-b border-white/10 bg-black/45 p-3"><div className="mb-2 text-sm font-semibold">Pinned messages</div>{pinned.length?<div className="space-y-1.5">{pinned.map(m=><button key={m.id} onClick={()=>jump(m.id)} className="block w-full rounded-xl bg-white/10 p-2 text-left text-sm">{textFromHtml(m.content).slice(0,120)}</button>)}</div>:<div className="text-sm text-white/40">Nothing pinned yet.</div>}</div>}
 
-   <div ref={list} className="flex-1 overflow-y-auto px-2 py-3 sm:px-4"><div className="space-y-2.5">
+   <div ref={list} className="flex-1 overflow-y-auto px-2 pb-3 pt-28 sm:px-4"><div className="space-y-2.5">
     {messages.map(m=>{
       const own=m.senderId===currentUserId,bubble=m.style?.bubbleColor||(own?pref.bubbleColor:"#27272a"),dotsColor=contrastColor(bubble),match=search?results.some(x=>x.m.id===m.id):false
       return <div id={"msg-"+m.id} key={m.id} className={"flex "+(own?"justify-end":"justify-start")+" "+(match?"rounded-xl ring-1 ring-yellow-300/40":"")}>
@@ -137,16 +156,16 @@ export default function ChatMessages(){
     {editing&&<div className="mb-2 flex items-center justify-between rounded-xl bg-pink-500/10 px-3 py-2 text-xs">Editing message<button onClick={()=>{setEditing(null);clearEditor()}}>Cancel</button></div>}
     {showFormat&&<div className="mb-2 rounded-2xl bg-zinc-50 p-2 text-black shadow-xl"><div className="flex flex-wrap gap-1">
       <button onClick={()=>command("bold")} className="rounded-lg px-3 py-2 font-bold">B</button><button onClick={()=>command("italic")} className="rounded-lg px-3 py-2 italic">I</button><button onClick={()=>command("underline")} className="rounded-lg px-3 py-2 underline">U</button><button onClick={()=>command("strikeThrough")} className="rounded-lg px-3 py-2">S̶</button>
-      <input type="color" value={pref.textColor} onChange={e=>void saveStyle({textColor:e.target.value})} className="h-9 w-10 rounded-lg"/>
-      <select value={pref.fontSize} onChange={e=>void saveStyle({fontSize:Number(e.target.value)})} className="rounded-lg bg-black/5 px-2 py-2 text-sm"><option value={13}>Small</option><option value={16}>Normal</option><option value={19}>Large</option><option value={23}>Huge</option></select>
-      <select value={pref.fontFamily} onChange={e=>void saveStyle({fontFamily:e.target.value})} className="max-w-28 rounded-lg bg-black/5 px-2 py-2 text-sm"><option value="system-ui">System</option><option value="Georgia">Serif</option><option value="monospace">Mono</option><option value="Arial">Arial</option><option value="Trebuchet MS">Trebuchet</option></select>
+      <select value={pref.fontSize} onChange={e=>{const v=Number(e.target.value);void saveStyle({fontSize:v});applyInlineStyle("fontSize",v+"px")}} className="rounded-lg bg-black/5 px-2 py-2 text-sm">{Array.from({length:23},(_,i)=>i+10).map(v=><option key={v} value={v}>{v}px</option>)}</select>
+      <input type="color" value={pref.textColor} onChange={e=>{void saveStyle({textColor:e.target.value});applyInlineStyle("color",e.target.value)}} title="Text color" className="h-9 w-10 rounded-lg"/>
+      <select value={pref.fontFamily} onChange={e=>{void saveStyle({fontFamily:e.target.value});applyInlineStyle("fontFamily",e.target.value)}} className="max-w-28 rounded-lg bg-black/5 px-2 py-2 text-sm"><option value="system-ui">System</option><option value="Georgia">Serif</option><option value="monospace">Mono</option><option value="Arial">Arial</option><option value="Trebuchet MS">Trebuchet</option></select>
       <input type="color" value={pref.bubbleColor} onChange={e=>void saveStyle({bubbleColor:e.target.value})} title="My message bubble" className="h-9 w-10 rounded-lg"/>
     </div><p className="mt-1 px-1 text-[10px] text-black/45">Style changes affect only your new messages. Your partner can choose their own.</p></div>}
     <div className="flex items-end gap-1.5">
      <button onClick={()=>setShowFormat(v=>!v)} className="rounded-xl bg-white/10 px-3 py-3 font-bold">Aa</button>
      <label className="cursor-pointer rounded-xl bg-white/10 px-3 py-3">📷<input type="file" accept="image/*,video/*" className="hidden" onChange={e=>{const file=e.target.files?.[0];if(file)void fileSend(file);e.currentTarget.value=""}}/></label>
      <button onClick={()=>void startVoice()} className={"rounded-xl px-3 py-3 "+(recording?"bg-red-500/40":"bg-white/10")}>{recording?"⏹️":"🎙️"}</button>
-     <div ref={editor} contentEditable suppressContentEditableWarning className="max-h-28 min-h-11 flex-1 overflow-y-auto rounded-xl bg-white/10 px-3 py-2.5 text-sm outline-none" style={{fontSize:pref.fontSize,fontFamily:pref.fontFamily,color:pref.textColor}}/>
+     <div ref={editor} contentEditable suppressContentEditableWarning data-placeholder="Type a message…" className="max-h-28 min-h-11 flex-1 overflow-y-auto rounded-xl bg-white/10 px-3 py-2.5 text-sm outline-none" style={{fontSize:pref.fontSize,fontFamily:pref.fontFamily,color:pref.textColor}}/>
      <button disabled={sending} onClick={()=>void send()} className="rounded-xl bg-pink-500/70 px-4 py-3 font-semibold disabled:opacity-50">➤</button>
     </div>
    </div>
