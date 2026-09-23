@@ -4,6 +4,7 @@ import HomeButton from "./HomeButton"
 import ActivityButton from "./ActivityButton"
 import LettersButton from "./LettersButton"
 import RoadmapButton from "./RoadmapButton"
+import CalendarButton from "./CalendarButton"
 import SettingsButton from "./SettingsButton"
 import SupportButton from "./SupportButton"
 
@@ -20,6 +21,8 @@ export default function DrawerMenu() {
       <LettersButton />
 
       <RoadmapButton />
+
+      <CalendarButton />
 
       <SettingsButton />
 
